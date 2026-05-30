@@ -109,4 +109,13 @@ client.on(Events.InteractionCreate, async interaction => {
 
 client.on("error", console.error);
 
+const token = process.env.DISCORD_TOKEN;
+
+if (!token) {
+  console.error("DISCORD_TOKEN is missing. Add it to your environment variables.");
+  process.exit(1);
+}
+
+console.log(`DISCORD_TOKEN loaded: length=${token.length}, parts=${token.split(".").length}`);
+
 client.login(process.env.DISCORD_TOKEN);
