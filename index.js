@@ -116,6 +116,4 @@ if (!token) {
   process.exit(1);
 }
 
-console.log(`DISCORD_TOKEN loaded: length=${token.length}, parts=${token.split(".").length}`);
-
 client.login(process.env.DISCORD_TOKEN);
