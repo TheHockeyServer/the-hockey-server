@@ -1,0 +1,7 @@
+.env
+node_modules/
+bot*.log
+data/*.json
+!data/.gitkeep
+the-hockey-server/
+team-operations-bot/

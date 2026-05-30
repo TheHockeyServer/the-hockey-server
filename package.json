@@ -1,0 +1,30 @@
+{
+  "name": "the-hockey-server",
+  "version": "1.0.0",
+  "description": "ths-project",
+  "homepage": "https://github.com/TheHockeyServer/the-hockey-server#readme",
+  "bugs": {
+    "url": "https://github.com/TheHockeyServer/the-hockey-server/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TheHockeyServer/the-hockey-server.git"
+  },
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "deploy": "node deploy-commands.js",
+    "test": "slapshot"
+  },
+  "dependencies": {
+    "discord.js": "^14.25.1",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  }
+}
