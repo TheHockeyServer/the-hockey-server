@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>RANKD Stats</title>
+    <link rel="stylesheet" href="/styles.css">
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="/leaderboard" aria-label="RANKD leaderboard">
+        <img src="/assets/rankd-bot-third.png" alt="RANKD">
+      </a>
+      <nav class="site-nav" aria-label="Primary">
+        <a href="/leaderboard" data-nav="leaderboard">Leaderboard</a>
+        <a href="/clubs" data-nav="clubs">Clubs</a>
+        <a href="/matches" data-nav="matches">Matches</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="hero">
+        <div>
+          <p class="eyebrow">EA NHL 26 6v6 ELO</p>
+          <h1>RANKD Stats</h1>
+          <p class="tagline">Only skill will help you climb.</p>
+        </div>
+        <div class="hero-stat" id="heroStat">
+          <span>Live Board</span>
+          <strong>2500</strong>
+          <small>Launch ELO</small>
+        </div>
+      </section>
+
+      <section class="toolbar">
+        <label class="search-label" for="searchInput">Player search</label>
+        <div class="search-row">
+          <input id="searchInput" autocomplete="off" placeholder="Search by player name">
+          <button id="searchButton" type="button">Search</button>
+        </div>
+      </section>
+
+      <section id="view" class="view" aria-live="polite"></section>
+    </main>
+
+    <script src="/app.js"></script>
+  </body>
+</html>

@@ -1,9 +1,13 @@
 const crypto = require("crypto");
 const express = require("express");
+const path = require("path");
 
 const chelheadWebhookStore = require("./chelheadWebhookStore");
+const statsService = require("./statsService");
 
 const DEFAULT_PORT = 8080;
+const PUBLIC_DIR = path.join(__dirname, "..", "public");
+const ASSETS_DIR = path.join(__dirname, "..", "assets");
 
 function getSignatureDigest(signature) {
   const value = String(signature ?? "").trim();
@@ -42,18 +46,77 @@ function verifyChelheadSignature(rawBody, signature, timestamp, secret) {
 function createWebServer() {
   const app = express();
 
-  app.get("/", (_req, res) => {
-    res.status(200).json({
-      ok: true,
-      service: "RANKD bot",
-    });
-  });
+  app.use(express.static(PUBLIC_DIR));
+  app.use("/assets", express.static(ASSETS_DIR));
 
   app.get("/health", (_req, res) => {
     res.status(200).json({
       ok: true,
       service: "RANKD bot",
     });
+  });
+
+  app.get("/api/overview", async (_req, res) => {
+    try {
+      res.json(await statsService.getOverview());
+    } catch (error) {
+      console.error("Failed to load stats overview:", error);
+      res.status(500).json({ error: "Failed to load stats overview" });
+    }
+  });
+
+  app.get("/api/leaderboard", async (req, res) => {
+    try {
+      res.json(await statsService.getLeaderboard({
+        limit: req.query.limit,
+        search: req.query.search,
+      }));
+    } catch (error) {
+      console.error("Failed to load leaderboard:", error);
+      res.status(500).json({ error: "Failed to load leaderboard" });
+    }
+  });
+
+  app.get("/api/players", async (req, res) => {
+    try {
+      res.json(await statsService.searchPlayers(req.query.search ?? "", req.query.limit));
+    } catch (error) {
+      console.error("Failed to search players:", error);
+      res.status(500).json({ error: "Failed to search players" });
+    }
+  });
+
+  app.get("/api/players/:userId", async (req, res) => {
+    try {
+      const player = await statsService.getPlayerProfile(req.params.userId);
+
+      if (!player) {
+        return res.status(404).json({ error: "Player not found" });
+      }
+
+      return res.json(player);
+    } catch (error) {
+      console.error("Failed to load player profile:", error);
+      return res.status(500).json({ error: "Failed to load player profile" });
+    }
+  });
+
+  app.get("/api/clubs", async (_req, res) => {
+    try {
+      res.json(await statsService.getRegisteredClubs());
+    } catch (error) {
+      console.error("Failed to load clubs:", error);
+      res.status(500).json({ error: "Failed to load clubs" });
+    }
+  });
+
+  app.get("/api/matches/recent", async (req, res) => {
+    try {
+      res.json(await statsService.getRecentMatches(req.query.limit));
+    } catch (error) {
+      console.error("Failed to load recent matches:", error);
+      res.status(500).json({ error: "Failed to load recent matches" });
+    }
   });
 
   app.post("/webhooks/chelhead", express.raw({ type: "application/json" }), async (req, res) => {
@@ -100,6 +163,10 @@ function createWebServer() {
       console.error("Failed to process CHELHead webhook:", error);
       return res.status(500).send("Webhook processing failed");
     }
+  });
+
+  app.get(["/", "/leaderboard", "/clubs", "/matches", "/players/:userId"], (_req, res) => {
+    res.sendFile(path.join(PUBLIC_DIR, "index.html"));
   });
 
   return app;
