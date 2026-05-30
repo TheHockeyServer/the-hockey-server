@@ -84,7 +84,7 @@ module.exports = {
     const clubId = interaction.options.getString("club_id", true);
     const alias = interaction.options.getString("alias", false);
     const username = interaction.member?.displayName ?? interaction.user.username;
-    const result = clubStore.registerClub({
+    const result = await clubStore.registerClub({
       clubId,
       name: clubName,
       alias,
@@ -96,7 +96,7 @@ module.exports = {
       return;
     }
 
-    ratingStore.getOrCreatePlayer(interaction.user.id, username);
+    await ratingStore.getOrCreatePlayer(interaction.user.id, username);
 
     let roleMessage;
 

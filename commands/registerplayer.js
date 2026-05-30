@@ -63,12 +63,12 @@ module.exports = {
     await interaction.deferReply({ ephemeral: true });
 
     const username = interaction.member?.displayName ?? interaction.user.username;
-    const result = playerRegistrationStore.registerPlayer({
+    const result = await playerRegistrationStore.registerPlayer({
       userId: interaction.user.id,
       username,
     });
 
-    ratingStore.getOrCreatePlayer(interaction.user.id, username);
+    await ratingStore.getOrCreatePlayer(interaction.user.id, username);
 
     let roleMessage;
 

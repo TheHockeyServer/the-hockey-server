@@ -16,7 +16,7 @@ module.exports = {
     .setDescription("Show the RANKD ELO leaderboard"),
 
   async execute(interaction) {
-    const leaderboard = ratingStore.getLeaderboard(10);
+    const leaderboard = await ratingStore.getLeaderboard(10);
 
     if (leaderboard.length === 0) {
       return interaction.reply("No completed RANKD matches yet.");

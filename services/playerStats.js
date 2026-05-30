@@ -1,7 +1,7 @@
 const ratingStore = require("./ratingStore");
 
-function getPlayerStats(userId, username) {
-  const player = ratingStore.getOrCreatePlayer(userId, username);
+async function getPlayerStats(userId, username) {
+  const player = await ratingStore.getOrCreatePlayer(userId, username);
 
   return {
     elo: player.rating,

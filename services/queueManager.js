@@ -18,7 +18,7 @@ function isPlayerInQueue(userId) {
   return false;
 }
 
-function addPlayer(userId, username, position) {
+async function addPlayer(userId, username, position) {
   if (!queue[position]) {
     return {
       success: false,
@@ -30,11 +30,17 @@ function addPlayer(userId, username, position) {
     return { success: false, message: "You are already in the queue." };
   }
 
+  const elo = await ratingStore.getPlayerRating(userId, username);
+
+  if (isPlayerInQueue(userId)) {
+    return { success: false, message: "You are already in the queue." };
+  }
+
   queue[position].push({
     userId,
     username,
     position,
-    elo: ratingStore.getPlayerRating(userId, username),
+    elo,
     joinedAt: Date.now(),
   });
 

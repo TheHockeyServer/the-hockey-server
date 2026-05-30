@@ -71,7 +71,7 @@ module.exports = {
       });
     }
 
-    const result = queueManager.addPlayer(userId, username, position);
+    const result = await queueManager.addPlayer(userId, username, position);
 
     if (!result.success) {
       return interaction.reply({
@@ -83,7 +83,7 @@ module.exports = {
     const queueSnapshot = queueManager.getQueueSnapshot();
     const matchReady = queueManager.isMatchReady();
     const positionEmojis = await getPositionEmojiMap(interaction.guild);
-    const playerStats = getPlayerStats(userId, username);
+    const playerStats = await getPlayerStats(userId, username);
 
     if (matchReady) {
       const players = queueManager.getMatchPlayers();

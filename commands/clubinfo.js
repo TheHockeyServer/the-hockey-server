@@ -15,7 +15,7 @@ module.exports = {
 
   async execute(interaction) {
     const query = interaction.options.getString("club", true);
-    const matches = clubStore.findClubByNameOrAlias(query);
+    const matches = await clubStore.findClubByNameOrAlias(query);
 
     if (matches.length === 0) {
       await interaction.reply({

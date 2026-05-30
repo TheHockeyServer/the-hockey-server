@@ -13,7 +13,7 @@ module.exports = {
     .setDescription("Show registered RANKD clubs"),
 
   async execute(interaction) {
-    const clubs = clubStore.getClubs()
+    const clubs = (await clubStore.getClubs())
       .sort((a, b) => a.name.localeCompare(b.name));
 
     if (clubs.length === 0) {

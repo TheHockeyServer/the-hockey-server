@@ -19,7 +19,7 @@ module.exports = {
 
   async execute(interaction) {
     const clubId = interaction.options.getString("club_id", true);
-    const club = clubStore.findClubById(clubId);
+    const club = await clubStore.findClubById(clubId);
 
     if (!club) {
       await interaction.reply({
@@ -29,7 +29,7 @@ module.exports = {
       return;
     }
 
-    clubStore.removeClub(clubId);
+    await clubStore.removeClub(clubId);
 
     await interaction.reply({
       content: `Removed registered club **${club.name}** (${club.clubId}).`,

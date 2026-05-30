@@ -6,10 +6,12 @@ function getTeamPlayers(team) {
   return Object.values(team);
 }
 
-function getAverageRating(players) {
-  const total = players.reduce((sum, player) => {
-    return sum + ratingStore.getPlayerRating(player.userId, player.username);
-  }, 0);
+async function getAverageRating(players) {
+  let total = 0;
+
+  for (const player of players) {
+    total += await ratingStore.getPlayerRating(player.userId, player.username);
+  }
 
   return Math.round(total / players.length);
 }
@@ -24,15 +26,17 @@ function getScoreOutcome(teamScore, opponentScore) {
   return 0.5;
 }
 
-function updateTeamPlayers(players, opponentAverageRating, outcome, goalsFor, goalsAgainst, playedAt) {
-  return players.map(player => {
-    const storedPlayer = ratingStore.getOrCreatePlayer(player.userId, player.username);
+async function updateTeamPlayers(players, opponentAverageRating, outcome, goalsFor, goalsAgainst, playedAt) {
+  const updatedPlayers = [];
+
+  for (const player of players) {
+    const storedPlayer = await ratingStore.getOrCreatePlayer(player.userId, player.username);
     const oldRating = storedPlayer.rating;
     const expectedScore = getExpectedScore(oldRating, opponentAverageRating);
     const ratingChange = Math.round(K_FACTOR * (outcome - expectedScore));
     const newRating = oldRating + ratingChange;
 
-    return {
+    updatedPlayers.push({
       ...storedPlayer,
       username: player.username,
       rating: newRating,
@@ -44,20 +48,22 @@ function updateTeamPlayers(players, opponentAverageRating, outcome, goalsFor, go
       lastPlayedAt: playedAt,
       lastRatingChange: ratingChange,
       previousRating: oldRating,
-    };
-  });
+    });
+  }
+
+  return updatedPlayers;
 }
 
-function recordMatchResult(match, teamAScore, teamBScore) {
+async function recordMatchResult(match, teamAScore, teamBScore) {
   const teamAPlayers = getTeamPlayers(match.teams.teamA);
   const teamBPlayers = getTeamPlayers(match.teams.teamB);
-  const teamAAverageRating = getAverageRating(teamAPlayers);
-  const teamBAverageRating = getAverageRating(teamBPlayers);
+  const teamAAverageRating = await getAverageRating(teamAPlayers);
+  const teamBAverageRating = await getAverageRating(teamBPlayers);
   const teamAOutcome = getScoreOutcome(teamAScore, teamBScore);
   const teamBOutcome = getScoreOutcome(teamBScore, teamAScore);
   const playedAt = Date.now();
 
-  const updatedTeamA = updateTeamPlayers(
+  const updatedTeamA = await updateTeamPlayers(
     teamAPlayers,
     teamBAverageRating,
     teamAOutcome,
@@ -65,7 +71,7 @@ function recordMatchResult(match, teamAScore, teamBScore) {
     teamBScore,
     playedAt
   );
-  const updatedTeamB = updateTeamPlayers(
+  const updatedTeamB = await updateTeamPlayers(
     teamBPlayers,
     teamAAverageRating,
     teamBOutcome,
@@ -74,7 +80,7 @@ function recordMatchResult(match, teamAScore, teamBScore) {
     playedAt
   );
 
-  ratingStore.updatePlayers([...updatedTeamA, ...updatedTeamB]);
+  await ratingStore.updatePlayers([...updatedTeamA, ...updatedTeamB]);
 
   const record = {
     matchId: match.id,
@@ -97,7 +103,7 @@ function recordMatchResult(match, teamAScore, teamBScore) {
     })),
   };
 
-  ratingStore.recordMatch(record);
+  await ratingStore.recordMatch(record);
 
   return {
     ...record,

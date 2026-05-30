@@ -19,7 +19,7 @@ module.exports = {
 
   async execute(interaction) {
     const user = interaction.options.getUser("player") ?? interaction.user;
-    const player = ratingStore.getOrCreatePlayer(user.id, user.username);
+    const player = await ratingStore.getOrCreatePlayer(user.id, user.username);
 
     await interaction.reply([
       `**${user.username}**`,

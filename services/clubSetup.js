@@ -329,7 +329,7 @@ async function handleClubSetupModal(interaction) {
     return;
   }
 
-  const matches = clubStore.findClubByNameOrAlias(clubName);
+  const matches = await clubStore.findClubByNameOrAlias(clubName);
 
   if (matches.length === 0) {
     await interaction.reply({

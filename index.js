@@ -3,6 +3,7 @@ const fs = require("fs");
 const path = require("path");
 const { Client, Collection, GatewayIntentBits, Events } = require("discord.js");
 const { handleClubSetupButton, handleClubSetupModal } = require("./services/clubSetup");
+const database = require("./services/database");
 const { handleServerVoteInteraction } = require("./services/serverVote");
 const { handleStaffAlertInteraction } = require("./services/staffAlert");
 
@@ -116,4 +117,14 @@ if (!token) {
   process.exit(1);
 }
 
-client.login(process.env.DISCORD_TOKEN);
+async function start() {
+  try {
+    await database.initDatabase();
+    await client.login(token);
+  } catch (error) {
+    console.error("Failed to start RANKD bot:", error);
+    process.exit(1);
+  }
+}
+
+start();

@@ -23,41 +23,41 @@ const TEAM_OPTIONS = [
   ["team_b_g", "Team B Goalie"],
 ];
 
-function playerFromUser(user, position) {
+async function playerFromUser(user, position) {
   return {
     userId: user.id,
     username: user.username,
     position,
-    elo: ratingStore.getPlayerRating(user.id, user.username),
+    elo: await ratingStore.getPlayerRating(user.id, user.username),
     joinedAt: Date.now(),
   };
 }
 
-function buildPlayers(interaction) {
+async function buildPlayers(interaction) {
   return {
     c: [
-      playerFromUser(interaction.options.getUser("team_a_c"), "c"),
-      playerFromUser(interaction.options.getUser("team_b_c"), "c"),
+      await playerFromUser(interaction.options.getUser("team_a_c"), "c"),
+      await playerFromUser(interaction.options.getUser("team_b_c"), "c"),
     ],
     lw: [
-      playerFromUser(interaction.options.getUser("team_a_lw"), "lw"),
-      playerFromUser(interaction.options.getUser("team_b_lw"), "lw"),
+      await playerFromUser(interaction.options.getUser("team_a_lw"), "lw"),
+      await playerFromUser(interaction.options.getUser("team_b_lw"), "lw"),
     ],
     rw: [
-      playerFromUser(interaction.options.getUser("team_a_rw"), "rw"),
-      playerFromUser(interaction.options.getUser("team_b_rw"), "rw"),
+      await playerFromUser(interaction.options.getUser("team_a_rw"), "rw"),
+      await playerFromUser(interaction.options.getUser("team_b_rw"), "rw"),
     ],
     ld: [
-      playerFromUser(interaction.options.getUser("team_a_ld"), "ld"),
-      playerFromUser(interaction.options.getUser("team_b_ld"), "ld"),
+      await playerFromUser(interaction.options.getUser("team_a_ld"), "ld"),
+      await playerFromUser(interaction.options.getUser("team_b_ld"), "ld"),
     ],
     rd: [
-      playerFromUser(interaction.options.getUser("team_a_rd"), "rd"),
-      playerFromUser(interaction.options.getUser("team_b_rd"), "rd"),
+      await playerFromUser(interaction.options.getUser("team_a_rd"), "rd"),
+      await playerFromUser(interaction.options.getUser("team_b_rd"), "rd"),
     ],
     g: [
-      playerFromUser(interaction.options.getUser("team_a_g"), "g"),
-      playerFromUser(interaction.options.getUser("team_b_g"), "g"),
+      await playerFromUser(interaction.options.getUser("team_a_g"), "g"),
+      await playerFromUser(interaction.options.getUser("team_b_g"), "g"),
     ],
   };
 }
@@ -122,7 +122,7 @@ module.exports = {
   data: commandBuilder,
 
   async execute(interaction) {
-    const players = buildPlayers(interaction);
+    const players = await buildPlayers(interaction);
     const duplicateUsers = getDuplicateUsers(players);
 
     if (duplicateUsers.length > 0) {

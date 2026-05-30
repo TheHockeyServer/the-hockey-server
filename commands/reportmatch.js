@@ -57,7 +57,7 @@ module.exports = {
       return interaction.editReply("RANKD matches need a winner. Please report the final score after overtime or replay.");
     }
 
-    const result = eloService.recordMatchResult(match, teamAScore, teamBScore);
+    const result = await eloService.recordMatchResult(match, teamAScore, teamBScore);
     matchService.completeMatch(matchId, teamAScore, teamBScore);
     await releaseMatchRoom(matchId, `Match ${matchId} final: Team A ${teamAScore}, Team B ${teamBScore}.`);
 
