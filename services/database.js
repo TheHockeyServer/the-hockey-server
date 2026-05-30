@@ -87,6 +87,17 @@ async function initDatabase() {
         registered_at BIGINT NOT NULL,
         updated_at BIGINT NOT NULL
       );
+
+      CREATE TABLE IF NOT EXISTS chelhead_webhook_events (
+        id BIGSERIAL PRIMARY KEY,
+        event TEXT NOT NULL,
+        chelhead_match_id TEXT UNIQUE,
+        chelhead_webhook_id TEXT,
+        payload JSONB NOT NULL,
+        headers JSONB NOT NULL DEFAULT '{}'::jsonb,
+        signature_verified BOOLEAN NOT NULL DEFAULT false,
+        received_at BIGINT NOT NULL
+      );
     `);
 
     initialized = true;

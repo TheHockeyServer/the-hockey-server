@@ -6,6 +6,7 @@ const { handleClubSetupButton, handleClubSetupModal } = require("./services/club
 const database = require("./services/database");
 const { handleServerVoteInteraction } = require("./services/serverVote");
 const { handleStaffAlertInteraction } = require("./services/staffAlert");
+const { startWebServer } = require("./services/webServer");
 
 const client = new Client({
   intents: [GatewayIntentBits.Guilds],
@@ -120,6 +121,7 @@ if (!token) {
 async function start() {
   try {
     await database.initDatabase();
+    startWebServer();
     await client.login(token);
   } catch (error) {
     console.error("Failed to start RANKD bot:", error);
