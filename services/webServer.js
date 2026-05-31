@@ -69,7 +69,9 @@ function createWebServer() {
     try {
       res.json(await statsService.getLeaderboard({
         limit: req.query.limit,
+        position: req.query.position,
         search: req.query.search,
+        sort: req.query.sort,
       }));
     } catch (error) {
       console.error("Failed to load leaderboard:", error);

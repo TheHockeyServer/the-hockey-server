@@ -4,12 +4,32 @@ const searchButton = document.querySelector("#searchButton");
 const heroStat = document.querySelector("#heroStat");
 const navLinks = [...document.querySelectorAll("[data-nav]")];
 
+const leaderboardState = {
+  position: "all",
+  sort: "elo",
+};
+
 const routes = {
   "/": renderLeaderboard,
   "/leaderboard": renderLeaderboard,
   "/clubs": renderClubs,
   "/matches": renderMatches,
 };
+
+const positionTabs = [
+  ["all", "All"],
+  ["forward", "Forward"],
+  ["defense", "Defense"],
+  ["goalie", "Goalie"],
+];
+
+const sortOptions = [
+  ["elo", "ELO"],
+  ["wins", "Wins"],
+  ["winPct", "Win %"],
+  ["games", "Games"],
+  ["goalDiff", "Goal Diff"],
+];
 
 function escapeHtml(value) {
   return String(value ?? "")
@@ -28,6 +48,9 @@ function formatDate(timestamp) {
   const dateValue = typeof value === "number" && value < 100000000000
     ? value * 1000
     : value;
+  const date = new Date(dateValue);
+
+  if (Number.isNaN(date.getTime())) return "Date unavailable";
 
   return new Intl.DateTimeFormat(undefined, {
     month: "short",
@@ -35,11 +58,15 @@ function formatDate(timestamp) {
     year: "numeric",
     hour: "numeric",
     minute: "2-digit",
-  }).format(new Date(dateValue));
+  }).format(date);
 }
 
 function recordText(player) {
   return `${player.wins}-${player.losses}`;
+}
+
+function signed(value) {
+  return Number(value) > 0 ? `+${value}` : `${value}`;
 }
 
 function setActiveNav() {
@@ -81,19 +108,19 @@ function setError(error) {
 
 function playerRow(player) {
   const differentialClass = player.goalDifferential >= 0 ? "good" : "bad";
-  const differentialSign = player.goalDifferential > 0 ? "+" : "";
+  const change = player.lastRatingChange;
 
   return `
     <a class="player-row" href="/players/${encodeURIComponent(player.userId)}">
       <span class="rank">#${player.rank}</span>
       <span class="identity">
         <strong>${escapeHtml(player.username)}</strong>
-        <span>${escapeHtml(recordText(player))} record | ${player.gamesPlayed} games</span>
+        <span>${escapeHtml(player.preferredPositionLabel)} | ${escapeHtml(recordText(player))} | ${player.gamesPlayed} games</span>
         <span class="stat-strip">
           <span class="pill">Win ${player.winPercentage}%</span>
-          <span class="pill">GF ${player.goalsFor}</span>
-          <span class="pill">GA ${player.goalsAgainst}</span>
-          <span class="pill ${differentialClass}">GD ${differentialSign}${player.goalDifferential}</span>
+          <span class="pill">High ${player.highestRating}</span>
+          <span class="pill ${differentialClass}">GD ${signed(player.goalDifferential)}</span>
+          ${change === null || change === undefined ? "" : `<span class="pill ${change >= 0 ? "good" : "bad"}">Last ${signed(change)}</span>`}
         </span>
       </span>
       <span class="rating">
@@ -101,6 +128,41 @@ function playerRow(player) {
         <span>ELO</span>
       </span>
     </a>
+  `;
+}
+
+function podiumCard(player, index) {
+  const labels = ["Top Rank", "Second", "Third"];
+
+  return `
+    <a class="podium-card podium-${index + 1}" href="/players/${encodeURIComponent(player.userId)}">
+      <span>${labels[index]}</span>
+      <strong>${escapeHtml(player.username)}</strong>
+      <em>${player.rating} ELO</em>
+      <small>${escapeHtml(player.preferredPositionLabel)} | ${escapeHtml(recordText(player))}</small>
+    </a>
+  `;
+}
+
+function leaderboardControls() {
+  return `
+    <div class="leaderboard-controls">
+      <div class="tabs" role="tablist" aria-label="Position filter">
+        ${positionTabs.map(([value, label]) => `
+          <button class="tab-button ${leaderboardState.position === value ? "active" : ""}" type="button" data-position="${value}">
+            ${label}
+          </button>
+        `).join("")}
+      </div>
+      <label class="sort-control">
+        <span>Sort</span>
+        <select id="sortSelect">
+          ${sortOptions.map(([value, label]) => `
+            <option value="${value}" ${leaderboardState.sort === value ? "selected" : ""}>${label}</option>
+          `).join("")}
+        </select>
+      </label>
+    </div>
   `;
 }
 
@@ -132,34 +194,25 @@ async function renderLeaderboard() {
 
   if (search) params.set("search", search);
   params.set("limit", "100");
+  params.set("position", leaderboardState.position);
+  params.set("sort", leaderboardState.sort);
 
   try {
     const players = await fetchJson(`/api/leaderboard?${params.toString()}`);
-
-    if (players.length === 0) {
-      view.innerHTML = `
-        <div class="section-title">
-          <div>
-            <h2>Leaderboard</h2>
-            <p>No players match this search yet.</p>
-          </div>
-        </div>
-        <div class="empty-state">
-          <h2>Nothing on the board</h2>
-          <p>Registered players and completed matches will appear here once RANKD activity starts flowing.</p>
-        </div>
-      `;
-      return;
-    }
+    const podium = players.slice(0, 3);
+    const rest = players.slice(3);
 
     view.innerHTML = `
       <div class="section-title">
         <div>
           <h2>Leaderboard</h2>
-          <p>${players.length} player${players.length === 1 ? "" : "s"} shown</p>
+          <p>${players.length ? `${players.length} player${players.length === 1 ? "" : "s"} shown` : "No players match this view yet."}</p>
         </div>
       </div>
-      <div class="list">${players.map(playerRow).join("")}</div>
+      ${leaderboardControls()}
+      ${podium.length ? `<div class="podium">${podium.map(podiumCard).join("")}</div>` : ""}
+      ${rest.length ? `<div class="list">${rest.map(playerRow).join("")}</div>` : ""}
+      ${players.length ? "" : empty("Nothing on the board", "Registered players and completed matches will appear here once RANKD activity starts flowing.")}
     `;
   } catch (error) {
     setError(error);
@@ -173,6 +226,7 @@ async function renderPlayer(userId) {
   try {
     const player = await fetchJson(`/api/players/${encodeURIComponent(userId)}`);
     const matches = player.recentMatches ?? [];
+    const change = player.lastRatingChange;
 
     view.innerHTML = `
       <section class="profile-panel">
@@ -181,14 +235,25 @@ async function renderPlayer(userId) {
           <h2>${escapeHtml(player.username)}</h2>
           <div class="stat-strip">
             <span class="pill">Rank #${player.rank ?? "-"}</span>
+            <span class="pill">${escapeHtml(player.preferredPositionLabel)}</span>
             <span class="pill">${escapeHtml(recordText(player))}</span>
             <span class="pill">${player.gamesPlayed} games</span>
             <span class="pill">Win ${player.winPercentage}%</span>
-            <span class="pill">GD ${player.goalDifferential}</span>
+            <span class="pill">High ${player.highestRating}</span>
+            ${change === null || change === undefined ? "" : `<span class="pill ${change >= 0 ? "good" : "bad"}">Last ${signed(change)}</span>`}
           </div>
         </div>
-        <div class="profile-score">${player.rating}</div>
+        <div class="profile-score">
+          ${player.rating}
+          <span>ELO</span>
+        </div>
       </section>
+      <div class="profile-grid">
+        ${statCard("Goals For", player.goalsFor)}
+        ${statCard("Goals Against", player.goalsAgainst)}
+        ${statCard("Goal Diff", signed(player.goalDifferential), player.goalDifferential >= 0 ? "good" : "bad")}
+        ${statCard("Last Played", formatDate(player.lastPlayedAt))}
+      </div>
       <div class="section-title">
         <div>
           <h2>Recent Matches</h2>
@@ -205,6 +270,15 @@ async function renderPlayer(userId) {
       </div>
     `;
   }
+}
+
+function statCard(label, value, className = "") {
+  return `
+    <article class="stat-card ${className}">
+      <span>${escapeHtml(label)}</span>
+      <strong>${escapeHtml(value)}</strong>
+    </article>
+  `;
 }
 
 async function renderClubs() {
@@ -230,12 +304,23 @@ async function renderClubs() {
 
 function clubRow(club) {
   const aliases = club.aliases?.length ? club.aliases.join(", ") : "No aliases";
+  const players = club.registeredPlayers ?? [];
 
   return `
-    <article class="club-row">
+    <article class="club-row club-row-expanded">
       <div>
         <h3>${escapeHtml(club.name)}</h3>
         <p>Club ID ${escapeHtml(club.clubId)} | ${escapeHtml(aliases)}</p>
+        ${players.length ? `
+          <div class="club-roster">
+            ${players.map(player => `
+              <a href="/players/${encodeURIComponent(player.userId)}">
+                <strong>${escapeHtml(player.username)}</strong>
+                <span>${escapeHtml(player.preferredPositionLabel)} | ${escapeHtml(player.record)} | ${player.rating} ELO</span>
+              </a>
+            `).join("")}
+          </div>
+        ` : `<p class="muted-line">No attached players found in ratings yet.</p>`}
       </div>
       <div class="rating">
         <strong>${club.registeredUserCount}</strong>
@@ -266,17 +351,35 @@ async function renderMatches() {
   }
 }
 
+function getChelheadScore(match, side) {
+  const enhanced = match.match?.["_enhanced"];
+  const clubId = side === "home" ? enhanced?.homeClubId : enhanced?.awayClubId;
+
+  return clubId ? enhanced?.result?.[clubId]?.score : undefined;
+}
+
 function matchRow(match) {
-  const teamAScore = match.teamAScore ?? match.match?.["_enhanced"]?.result?.[match.match?.["_enhanced"]?.homeClubId]?.score ?? "-";
-  const teamBScore = match.teamBScore ?? match.match?.["_enhanced"]?.result?.[match.match?.["_enhanced"]?.awayClubId]?.score ?? "-";
+  const teamAScore = match.teamAScore ?? getChelheadScore(match, "home") ?? "-";
+  const teamBScore = match.teamBScore ?? getChelheadScore(match, "away") ?? "-";
   const id = match.matchId ?? match.match?.matchId ?? "Unknown";
   const playedAt = match.playedAt ?? match.match?.timestamp ?? match.timestamp;
+  const winner = Number(teamAScore) > Number(teamBScore)
+    ? "Team A"
+    : Number(teamBScore) > Number(teamAScore)
+      ? "Team B"
+      : "Pending";
+  const source = match.match ? "CHELHead webhook" : "Manual report";
 
   return `
     <article class="match-row">
-      <h3>Match ${escapeHtml(id)}</h3>
-      <p class="match-score">Team A ${escapeHtml(teamAScore)} - Team B ${escapeHtml(teamBScore)}</p>
-      <p>${escapeHtml(formatDate(playedAt))}</p>
+      <div>
+        <h3>Match ${escapeHtml(id)}</h3>
+        <p>${escapeHtml(formatDate(playedAt))} | ${escapeHtml(source)}</p>
+      </div>
+      <div class="match-result">
+        <span>${escapeHtml(winner)} Winner</span>
+        <strong>Team A ${escapeHtml(teamAScore)} - Team B ${escapeHtml(teamBScore)}</strong>
+      </div>
     </article>
   `;
 }
@@ -309,12 +412,27 @@ function route() {
 }
 
 document.addEventListener("click", event => {
+  const positionButton = event.target.closest("[data-position]");
+
+  if (positionButton) {
+    leaderboardState.position = positionButton.dataset.position;
+    navigate("/leaderboard");
+    return;
+  }
+
   const link = event.target.closest("a");
 
   if (!link || link.origin !== window.location.origin) return;
 
   event.preventDefault();
   navigate(link.pathname);
+});
+
+document.addEventListener("change", event => {
+  if (event.target.id === "sortSelect") {
+    leaderboardState.sort = event.target.value;
+    navigate("/leaderboard");
+  }
 });
 
 searchButton.addEventListener("click", () => {

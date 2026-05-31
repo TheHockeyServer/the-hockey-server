@@ -206,7 +206,8 @@ h1 {
 }
 
 input,
-button {
+button,
+select {
   min-height: 3rem;
   border: 1px solid var(--line);
   background: var(--panel);
@@ -214,7 +215,8 @@ button {
   font: inherit;
 }
 
-input {
+input,
+select {
   width: 100%;
   padding: 0 1rem;
 }
@@ -248,6 +250,103 @@ button {
 .section-title p {
   margin: 0;
   color: var(--muted);
+}
+
+.leaderboard-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.tab-button {
+  min-height: 2.45rem;
+  padding: 0 0.85rem;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+
+.tab-button.active {
+  background: var(--purple);
+  color: #fff;
+}
+
+.sort-control {
+  display: grid;
+  grid-template-columns: auto minmax(8rem, 12rem);
+  align-items: center;
+  gap: 0.6rem;
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.sort-control select {
+  min-height: 2.45rem;
+  font-weight: 800;
+}
+
+.podium {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.podium-card {
+  min-height: 11rem;
+  padding: 1rem;
+  border: 1px solid rgba(246, 234, 58, 0.25);
+  background:
+    linear-gradient(135deg, rgba(155, 53, 255, 0.28), rgba(255, 255, 255, 0.04)),
+    var(--panel);
+  text-decoration: none;
+}
+
+.podium-card span,
+.podium-card small {
+  display: block;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.podium-card strong {
+  display: block;
+  margin-top: 1.35rem;
+  overflow: hidden;
+  color: var(--text);
+  font-size: clamp(1.4rem, 4vw, 2.4rem);
+  line-height: 1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.podium-card em {
+  display: block;
+  margin: 0.35rem 0 0.75rem;
+  color: var(--yellow);
+  font-style: normal;
+  font-size: 1.05rem;
+  font-weight: 1000;
+}
+
+.podium-1 {
+  border-color: rgba(246, 234, 58, 0.55);
+  background:
+    linear-gradient(135deg, rgba(246, 234, 58, 0.23), rgba(155, 53, 255, 0.24)),
+    var(--panel);
 }
 
 .grid {
@@ -373,6 +472,51 @@ button {
   line-height: 1;
 }
 
+.profile-score span {
+  display: block;
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.profile-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.stat-card {
+  min-height: 6rem;
+  padding: 0.9rem;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.stat-card span {
+  display: block;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.stat-card strong {
+  display: block;
+  margin-top: 0.65rem;
+  color: var(--text);
+  font-size: clamp(1.2rem, 4vw, 1.8rem);
+  line-height: 1.1;
+}
+
+.stat-card.good strong {
+  color: var(--green);
+}
+
+.stat-card.bad strong {
+  color: var(--red);
+}
+
 .club-row,
 .match-row,
 .empty-state {
@@ -383,6 +527,10 @@ button {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 1rem;
+}
+
+.club-row-expanded {
+  align-items: start;
 }
 
 .club-row h3,
@@ -397,6 +545,50 @@ button {
   color: var(--muted);
 }
 
+.muted-line {
+  margin-top: 0.75rem !important;
+}
+
+.club-roster {
+  display: grid;
+  gap: 0.45rem;
+  margin-top: 0.9rem;
+}
+
+.club-roster a {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.75rem;
+  padding: 0.65rem 0.75rem;
+  background: rgba(255, 255, 255, 0.055);
+  text-decoration: none;
+}
+
+.club-roster strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.club-roster span {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.match-result {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.match-result span {
+  color: var(--yellow);
+  font-size: 0.8rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.match-result strong,
 .match-score {
   color: var(--yellow);
   font-size: 1.3rem;
@@ -441,6 +633,25 @@ button {
     grid-template-columns: 1fr;
   }
 
+  .leaderboard-controls,
+  .sort-control {
+    align-items: stretch;
+    grid-template-columns: 1fr;
+  }
+
+  .leaderboard-controls {
+    display: grid;
+  }
+
+  .tab-button {
+    flex: 1 1 calc(50% - 0.45rem);
+  }
+
+  .podium,
+  .profile-grid {
+    grid-template-columns: 1fr;
+  }
+
   .grid {
     grid-template-columns: 1fr;
   }
@@ -461,5 +672,9 @@ button {
 
   .profile-score {
     text-align: left;
+  }
+
+  .club-roster a {
+    grid-template-columns: 1fr;
   }
 }

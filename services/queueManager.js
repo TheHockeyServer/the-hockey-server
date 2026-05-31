@@ -30,7 +30,8 @@ async function addPlayer(userId, username, position) {
     return { success: false, message: "You are already in the queue." };
   }
 
-  const elo = await ratingStore.getPlayerRating(userId, username);
+  const player = await ratingStore.setPreferredPosition(userId, username, position);
+  const elo = player.rating;
 
   if (isPlayerInQueue(userId)) {
     return { success: false, message: "You are already in the queue." };

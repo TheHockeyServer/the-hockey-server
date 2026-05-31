@@ -61,6 +61,8 @@ function mapDbPlayer(row) {
     userId: row.user_id,
     username: row.username,
     rating: row.rating,
+    highestRating: row.highest_rating,
+    preferredPosition: row.preferred_position,
     wins: row.wins,
     losses: row.losses,
     gamesPlayed: row.games_played,
@@ -76,6 +78,8 @@ function createPlayer(userId, username) {
     userId,
     username: username ?? "Unknown",
     rating: DEFAULT_RATING,
+    highestRating: DEFAULT_RATING,
+    preferredPosition: null,
     wins: 0,
     losses: 0,
     gamesPlayed: 0,
@@ -104,10 +108,11 @@ async function getOrCreatePlayer(userId, username) {
   const result = await database.query(
     `
       INSERT INTO players (
-        user_id, username, rating, wins, losses, games_played,
+        user_id, username, rating, highest_rating, preferred_position,
+        wins, losses, games_played,
         goals_for, goals_against, last_played_at, data, updated_at
       )
-      VALUES ($1, $2, $3, 0, 0, 0, 0, 0, NULL, '{}'::jsonb, $4)
+      VALUES ($1, $2, $3, $3, NULL, 0, 0, 0, 0, 0, NULL, '{}'::jsonb, $4)
       ON CONFLICT (user_id)
       DO UPDATE SET
         username = EXCLUDED.username,
@@ -141,6 +146,7 @@ async function updatePlayers(players) {
       data.players[player.userId] = {
         ...await getOrCreatePlayer(player.userId, player.username),
         ...player,
+        highestRating: Math.max(player.highestRating ?? DEFAULT_RATING, player.rating ?? DEFAULT_RATING),
       };
     }
 
@@ -154,14 +160,17 @@ async function updatePlayers(players) {
     await database.query(
       `
         INSERT INTO players (
-          user_id, username, rating, wins, losses, games_played,
+          user_id, username, rating, highest_rating, preferred_position,
+          wins, losses, games_played,
           goals_for, goals_against, last_played_at, data, updated_at
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10::jsonb, $11)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12::jsonb, $13)
         ON CONFLICT (user_id)
         DO UPDATE SET
           username = EXCLUDED.username,
           rating = EXCLUDED.rating,
+          highest_rating = GREATEST(players.highest_rating, EXCLUDED.highest_rating),
+          preferred_position = COALESCE(EXCLUDED.preferred_position, players.preferred_position),
           wins = EXCLUDED.wins,
           losses = EXCLUDED.losses,
           games_played = EXCLUDED.games_played,
@@ -175,6 +184,8 @@ async function updatePlayers(players) {
         player.userId,
         player.username ?? "Unknown",
         player.rating,
+        Math.max(player.highestRating ?? DEFAULT_RATING, player.rating ?? DEFAULT_RATING),
+        player.preferredPosition ?? null,
         player.wins,
         player.losses,
         player.gamesPlayed,
@@ -189,6 +200,44 @@ async function updatePlayers(players) {
       ]
     );
   }
+}
+
+async function setPreferredPosition(userId, username, position) {
+  const normalizedPosition = String(position ?? "").trim().toLowerCase() || null;
+
+  if (!database.isDatabaseEnabled()) {
+    const data = loadState();
+    const player = await getOrCreatePlayer(userId, username);
+
+    data.players[userId] = {
+      ...player,
+      preferredPosition: normalizedPosition,
+    };
+
+    saveState();
+    return data.players[userId];
+  }
+
+  const now = Date.now();
+  const result = await database.query(
+    `
+      INSERT INTO players (
+        user_id, username, rating, highest_rating, preferred_position,
+        wins, losses, games_played, goals_for, goals_against,
+        last_played_at, data, updated_at
+      )
+      VALUES ($1, $2, $3, $3, $4, 0, 0, 0, 0, 0, NULL, '{}'::jsonb, $5)
+      ON CONFLICT (user_id)
+      DO UPDATE SET
+        username = EXCLUDED.username,
+        preferred_position = EXCLUDED.preferred_position,
+        updated_at = EXCLUDED.updated_at
+      RETURNING *
+    `,
+    [userId, username ?? "Unknown", DEFAULT_RATING, normalizedPosition, now]
+  );
+
+  return mapDbPlayer(result.rows[0]);
 }
 
 async function recordMatch(matchRecord) {
@@ -243,5 +292,6 @@ module.exports = {
   getPlayer,
   getPlayerRating,
   recordMatch,
+  setPreferredPosition,
   updatePlayers,
 };

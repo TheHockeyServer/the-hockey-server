@@ -46,6 +46,8 @@ async function initDatabase() {
         user_id TEXT PRIMARY KEY,
         username TEXT NOT NULL,
         rating INTEGER NOT NULL DEFAULT 2500,
+        highest_rating INTEGER NOT NULL DEFAULT 2500,
+        preferred_position TEXT,
         wins INTEGER NOT NULL DEFAULT 0,
         losses INTEGER NOT NULL DEFAULT 0,
         games_played INTEGER NOT NULL DEFAULT 0,
@@ -55,6 +57,12 @@ async function initDatabase() {
         data JSONB NOT NULL DEFAULT '{}'::jsonb,
         updated_at BIGINT NOT NULL
       );
+
+      ALTER TABLE players
+        ADD COLUMN IF NOT EXISTS highest_rating INTEGER NOT NULL DEFAULT 2500;
+
+      ALTER TABLE players
+        ADD COLUMN IF NOT EXISTS preferred_position TEXT;
 
       CREATE TABLE IF NOT EXISTS rating_matches (
         id BIGSERIAL PRIMARY KEY,
