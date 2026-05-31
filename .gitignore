@@ -3,5 +3,6 @@ node_modules/
 bot*.log
 data/*.json
 !data/.gitkeep
+output/
 the-hockey-server/
 team-operations-bot/

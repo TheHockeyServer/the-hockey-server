@@ -1,0 +1,14 @@
+baseUrl: https://the-hockey-server-production.up.railway.app
+options: {}
+screens:
+  - name: Leaderboard
+    path: /leaderboard
+  - name: Clubs
+    path: /clubs
+  - name: Matches
+    path: /matches
+sizes:
+  - width: 390
+    height: 844
+  - width: 1440
+    height: 900
