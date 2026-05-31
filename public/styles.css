@@ -100,13 +100,42 @@ main {
 }
 
 .hero {
+  position: relative;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 1rem;
   align-items: end;
-  min-height: 15rem;
-  padding: clamp(1rem, 4vw, 2rem) 0;
+  min-height: clamp(18rem, 42vw, 34rem);
+  margin: 0 calc(clamp(1rem, 3vw, 2rem) * -1) 1.25rem;
+  padding: clamp(1rem, 3vw, 2rem);
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+  background:
+    linear-gradient(90deg, rgba(0, 0, 0, 0.78), rgba(0, 0, 0, 0.18) 48%, rgba(0, 0, 0, 0.58)),
+    url("/assets/banners/rankd-stats-banner.png"),
+    radial-gradient(circle at 65% 35%, rgba(155, 53, 255, 0.4), transparent 28rem),
+    #050506;
+  background-position: center;
+  background-size: cover;
+}
+
+.hero::after {
+  position: absolute;
+  inset: auto 0 0;
+  height: 45%;
+  content: "";
+  background: linear-gradient(to bottom, transparent, rgba(8, 8, 11, 0.96));
+  pointer-events: none;
+}
+
+.hero-copy,
+.hero-stat {
+  position: relative;
+  z-index: 1;
+}
+
+.hero-copy {
+  visibility: hidden;
 }
 
 .eyebrow {
@@ -138,7 +167,9 @@ h1 {
   min-width: 9rem;
   padding: 1rem;
   border-left: 4px solid var(--yellow);
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(10, 10, 13, 0.74);
+  box-shadow: 0 1rem 2rem rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(10px);
 }
 
 .hero-stat span,
@@ -397,7 +428,9 @@ button {
 
   .hero {
     grid-template-columns: 1fr;
-    min-height: 12rem;
+    min-height: clamp(14rem, 54vw, 21rem);
+    margin-top: 0;
+    background-position: center;
   }
 
   .hero-stat {
