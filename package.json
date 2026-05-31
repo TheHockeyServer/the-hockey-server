@@ -17,8 +17,7 @@
   "scripts": {
     "start": "node index.js",
     "deploy": "node deploy-commands.js",
-    "test": "node scripts/smoke-test.js",
-    "screenshots": "slapshot"
+    "test": "node scripts/smoke-test.js"
   },
   "dependencies": {
     "discord.js": "^14.25.1",
@@ -27,7 +26,6 @@
     "pg": "^8.21.0"
   },
   "devDependencies": {
-    "nodemon": "^3.1.14",
-    "slapshot": "^1.0.0"
+    "nodemon": "^3.1.14"
   }
 }
