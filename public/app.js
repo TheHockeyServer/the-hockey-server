@@ -287,6 +287,12 @@ async function renderClubs() {
 
   try {
     const clubs = await fetchJson("/api/clubs");
+    const attachedPlayers = clubs.reduce((sum, club) => sum + (club.registeredUserCount ?? 0), 0);
+    const verifiedClubs = clubs.filter(club => club.isVerified).length;
+    const protectedClubs = clubs.filter(club => club.isProtected).length;
+    const featuredClubs = [...clubs]
+      .sort((a, b) => (b.registeredUserCount ?? 0) - (a.registeredUserCount ?? 0) || a.name.localeCompare(b.name))
+      .slice(0, 3);
 
     view.innerHTML = `
       <div class="section-title">
@@ -295,11 +301,41 @@ async function renderClubs() {
           <p>${clubs.length} club${clubs.length === 1 ? "" : "s"} registered</p>
         </div>
       </div>
+      <div class="insight-grid">
+        ${statCard("Registered Clubs", clubs.length)}
+        ${statCard("Attached Players", attachedPlayers)}
+        ${statCard("Verified Clubs", verifiedClubs)}
+        ${statCard("Protected Clubs", protectedClubs)}
+      </div>
+      ${featuredClubs.length ? `
+        <section class="feature-panel">
+          <div class="feature-panel-header">
+            <span>Club Snapshot</span>
+            <strong>Most Attached Players</strong>
+          </div>
+          <div class="feature-grid">
+            ${featuredClubs.map(featuredClubCard).join("")}
+          </div>
+        </section>
+      ` : ""}
       ${clubs.length ? `<div class="list">${clubs.map(clubRow).join("")}</div>` : empty("No clubs registered", "Club registrations will show here after players use /registerclub.")}
     `;
   } catch (error) {
     setError(error);
   }
+}
+
+function featuredClubCard(club) {
+  const topPlayer = club.registeredPlayers?.[0];
+
+  return `
+    <article class="feature-card">
+      <span>Club ID ${escapeHtml(club.clubId)}</span>
+      <strong>${escapeHtml(club.name)}</strong>
+      <em>${club.registeredUserCount} attached player${club.registeredUserCount === 1 ? "" : "s"}</em>
+      <small>${topPlayer ? `Top attached: ${escapeHtml(topPlayer.username)} (${topPlayer.rating} ELO)` : "Roster details pending"}</small>
+    </article>
+  `;
 }
 
 function clubRow(club) {
@@ -336,6 +372,16 @@ async function renderMatches() {
 
   try {
     const matches = await fetchJson("/api/matches/recent?limit=50");
+    const webhookMatches = matches.filter(match => match.match).length;
+    const manualMatches = matches.length - webhookMatches;
+    const latestMatch = matches[0];
+    const highestScore = matches.reduce((best, match) => {
+      const { teamAScore, teamBScore } = getMatchScores(match);
+      const total = Number(teamAScore) + Number(teamBScore);
+
+      if (!Number.isFinite(total)) return best;
+      return !best || total > best.total ? { match, total } : best;
+    }, null);
 
     view.innerHTML = `
       <div class="section-title">
@@ -344,6 +390,21 @@ async function renderMatches() {
           <p>${matches.length} completed match${matches.length === 1 ? "" : "es"}</p>
         </div>
       </div>
+      <div class="insight-grid">
+        ${statCard("Stored Matches", matches.length)}
+        ${statCard("Webhook Results", webhookMatches)}
+        ${statCard("Manual Reports", manualMatches)}
+        ${statCard("Latest Match", latestMatch ? `#${latestMatch.matchId ?? latestMatch.match?.matchId ?? "Pending"}` : "None")}
+      </div>
+      ${highestScore ? `
+        <section class="feature-panel match-feature">
+          <div class="feature-panel-header">
+            <span>Match Snapshot</span>
+            <strong>Highest Combined Score</strong>
+          </div>
+          ${matchRow(highestScore.match)}
+        </section>
+      ` : ""}
       ${matches.length ? `<div class="list">${matches.map(matchRow).join("")}</div>` : empty("No completed matches", "Webhook and reported match results will appear here.")}
     `;
   } catch (error) {
@@ -358,9 +419,15 @@ function getChelheadScore(match, side) {
   return clubId ? enhanced?.result?.[clubId]?.score : undefined;
 }
 
+function getMatchScores(match) {
+  return {
+    teamAScore: match.teamAScore ?? getChelheadScore(match, "home") ?? "-",
+    teamBScore: match.teamBScore ?? getChelheadScore(match, "away") ?? "-",
+  };
+}
+
 function matchRow(match) {
-  const teamAScore = match.teamAScore ?? getChelheadScore(match, "home") ?? "-";
-  const teamBScore = match.teamBScore ?? getChelheadScore(match, "away") ?? "-";
+  const { teamAScore, teamBScore } = getMatchScores(match);
   const id = match.matchId ?? match.match?.matchId ?? "Unknown";
   const playedAt = match.playedAt ?? match.match?.timestamp ?? match.timestamp;
   const winner = Number(teamAScore) > Number(teamBScore)

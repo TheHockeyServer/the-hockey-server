@@ -486,6 +486,12 @@ button {
   gap: 0.75rem;
 }
 
+.insight-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
 .stat-card {
   min-height: 6rem;
   padding: 0.9rem;
@@ -515,6 +521,83 @@ button {
 
 .stat-card.bad strong {
   color: var(--red);
+}
+
+.feature-panel {
+  display: grid;
+  gap: 0.9rem;
+  padding: clamp(1rem, 3vw, 1.25rem);
+  border: 1px solid rgba(155, 53, 255, 0.4);
+  background:
+    linear-gradient(135deg, rgba(155, 53, 255, 0.18), rgba(246, 234, 58, 0.06)),
+    rgba(255, 255, 255, 0.035);
+}
+
+.feature-panel-header {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.feature-panel-header span {
+  color: var(--yellow);
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.feature-panel-header strong {
+  color: var(--text);
+  font-size: clamp(1.1rem, 3vw, 1.6rem);
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.feature-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.feature-card {
+  min-height: 9rem;
+  padding: 0.9rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background:
+    radial-gradient(circle at 100% 0%, rgba(246, 234, 58, 0.16), transparent 8rem),
+    rgba(8, 8, 11, 0.62);
+}
+
+.feature-card span,
+.feature-card small {
+  display: block;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.feature-card strong {
+  display: block;
+  margin-top: 1rem;
+  overflow: hidden;
+  color: var(--text);
+  font-size: 1.25rem;
+  line-height: 1.1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.feature-card em {
+  display: block;
+  margin: 0.35rem 0 0.7rem;
+  color: var(--yellow);
+  font-style: normal;
+  font-weight: 1000;
+}
+
+.match-feature .match-row {
+  background: rgba(8, 8, 11, 0.62);
 }
 
 .club-row,
@@ -648,8 +731,15 @@ button {
   }
 
   .podium,
-  .profile-grid {
+  .profile-grid,
+  .insight-grid,
+  .feature-grid {
     grid-template-columns: 1fr;
+  }
+
+  .feature-panel-header {
+    align-items: start;
+    flex-direction: column;
   }
 
   .grid {
