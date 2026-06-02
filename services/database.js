@@ -1,6 +1,7 @@
 const { Pool } = require("pg");
 
 const DATABASE_URL_SOURCES = [
+  ["RANKD_DATABASE_URL", process.env.RANKD_DATABASE_URL],
   ["DATABASE_PUBLIC_URL", process.env.DATABASE_PUBLIC_URL],
   ["DATABASE_CONNECTION_URL", process.env.DATABASE_CONNECTION_URL],
   ["DATABASE_URL", process.env.DATABASE_URL],
@@ -45,7 +46,7 @@ async function query(text, params = []) {
   const activePool = getPool();
 
   if (!activePool) {
-    throw new Error("DATABASE_URL is not configured.");
+    throw new Error("Database URL is not configured.");
   }
 
   await initDatabase();
