@@ -364,6 +364,7 @@ button {
 .club-row,
 .match-row,
 .profile-panel,
+.player-hero-panel,
 .empty-state {
   border: 1px solid var(--line);
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.025));
@@ -484,6 +485,168 @@ button {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 0.75rem;
+}
+
+.player-hero-panel {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: clamp(1rem, 3vw, 1.4rem);
+  align-items: center;
+  padding: clamp(1rem, 4vw, 1.6rem);
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 18% 20%, rgba(246, 234, 58, 0.2), transparent 12rem),
+    radial-gradient(circle at 85% 10%, rgba(155, 53, 255, 0.3), transparent 18rem),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02));
+}
+
+.player-hero-panel::after {
+  position: absolute;
+  inset: auto 0 0;
+  height: 0.25rem;
+  content: "";
+  background: linear-gradient(90deg, var(--purple), var(--yellow));
+}
+
+.player-mark {
+  display: grid;
+  place-items: center;
+  width: clamp(4.5rem, 12vw, 7rem);
+  aspect-ratio: 1;
+  border: 1px solid rgba(246, 234, 58, 0.42);
+  background:
+    linear-gradient(135deg, rgba(155, 53, 255, 0.9), rgba(8, 8, 11, 0.8)),
+    var(--panel);
+  color: var(--yellow);
+  font-size: clamp(1.4rem, 5vw, 2.5rem);
+  font-weight: 1000;
+  line-height: 1;
+}
+
+.player-hero-copy {
+  min-width: 0;
+}
+
+.player-hero-copy h2 {
+  margin: 0;
+  overflow: hidden;
+  color: var(--text);
+  font-size: clamp(2rem, 7vw, 4.6rem);
+  line-height: 0.95;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.profile-grid-featured .stat-card {
+  background:
+    linear-gradient(180deg, rgba(155, 53, 255, 0.16), rgba(255, 255, 255, 0.035)),
+    rgba(255, 255, 255, 0.035);
+}
+
+.profile-dashboard {
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr 1fr;
+  gap: 0.75rem;
+}
+
+.profile-card {
+  display: grid;
+  align-content: start;
+  gap: 0.85rem;
+  min-height: 12rem;
+  padding: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background:
+    radial-gradient(circle at 100% 0%, rgba(155, 53, 255, 0.2), transparent 10rem),
+    rgba(8, 8, 11, 0.58);
+}
+
+.profile-card-header {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.profile-card-header span,
+.profile-metrics span,
+.profile-club-list span {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.profile-card-header strong {
+  color: var(--text);
+  font-size: clamp(1.25rem, 4vw, 1.75rem);
+  line-height: 1.05;
+  text-transform: uppercase;
+}
+
+.meter {
+  height: 0.7rem;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.meter span {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, var(--purple), var(--yellow));
+}
+
+.profile-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+
+.profile-metrics.stacked {
+  grid-template-columns: 1fr;
+}
+
+.profile-metrics div,
+.profile-club-list div {
+  padding: 0.7rem;
+  background: rgba(255, 255, 255, 0.055);
+}
+
+.profile-metrics strong {
+  display: block;
+  margin-top: 0.25rem;
+  color: var(--text);
+  font-size: 1.35rem;
+  line-height: 1;
+}
+
+.profile-metrics strong.good {
+  color: var(--green);
+}
+
+.profile-metrics strong.bad {
+  color: var(--red);
+}
+
+.profile-metrics small {
+  display: block;
+  margin-top: 0.25rem;
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.profile-club-list {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.profile-club-list strong {
+  display: block;
+  overflow: hidden;
+  color: var(--text);
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .insight-grid {
@@ -732,6 +895,7 @@ button {
 
   .podium,
   .profile-grid,
+  .profile-dashboard,
   .insight-grid,
   .feature-grid {
     grid-template-columns: 1fr;
@@ -756,12 +920,21 @@ button {
   }
 
   .profile-panel,
+  .player-hero-panel,
   .club-row {
     grid-template-columns: 1fr;
   }
 
+  .player-hero-copy h2 {
+    white-space: normal;
+  }
+
   .profile-score {
     text-align: left;
+  }
+
+  .profile-metrics {
+    grid-template-columns: 1fr;
   }
 
   .club-roster a {

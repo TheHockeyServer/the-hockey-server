@@ -69,6 +69,23 @@ function signed(value) {
   return Number(value) > 0 ? `+${value}` : `${value}`;
 }
 
+function getPlayerStatus(player) {
+  if (player.gamesPlayed <= 0) return "Launch Ready";
+  if (player.lastRatingChange > 0) return "Climbing";
+  if (player.lastRatingChange < 0) return "Rebound Watch";
+  return "Holding";
+}
+
+function getPlayerInitials(username) {
+  return String(username ?? "R")
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map(part => part[0])
+    .join("")
+    .toUpperCase() || "R";
+}
+
 function setActiveNav() {
   const path = window.location.pathname;
 
@@ -227,26 +244,94 @@ async function renderPlayer(userId) {
     const player = await fetchJson(`/api/players/${encodeURIComponent(userId)}`);
     const matches = player.recentMatches ?? [];
     const change = player.lastRatingChange;
+    const clubs = player.registeredClubs ?? [];
+    const primaryClub = clubs[0];
+    const winRate = Math.max(0, Math.min(100, Number(player.winPercentage) || 0));
+    const goalsForPerGame = player.gamesPlayed > 0 ? (player.goalsFor / player.gamesPlayed).toFixed(1) : "0.0";
+    const goalsAgainstPerGame = player.gamesPlayed > 0 ? (player.goalsAgainst / player.gamesPlayed).toFixed(1) : "0.0";
 
     view.innerHTML = `
-      <section class="profile-panel">
-        <div>
-          <p class="eyebrow">RANKD Player</p>
+      <section class="player-hero-panel">
+        <div class="player-mark">${escapeHtml(getPlayerInitials(player.username))}</div>
+        <div class="player-hero-copy">
+          <p class="eyebrow">RANKD Player Profile</p>
           <h2>${escapeHtml(player.username)}</h2>
           <div class="stat-strip">
             <span class="pill">Rank #${player.rank ?? "-"}</span>
             <span class="pill">${escapeHtml(player.preferredPositionLabel)}</span>
-            <span class="pill">${escapeHtml(recordText(player))}</span>
-            <span class="pill">${player.gamesPlayed} games</span>
-            <span class="pill">Win ${player.winPercentage}%</span>
-            <span class="pill">High ${player.highestRating}</span>
-            ${change === null || change === undefined ? "" : `<span class="pill ${change >= 0 ? "good" : "bad"}">Last ${signed(change)}</span>`}
+            <span class="pill">${escapeHtml(getPlayerStatus(player))}</span>
+            ${primaryClub ? `<span class="pill">${escapeHtml(primaryClub.name)}</span>` : `<span class="pill">No Club Attached</span>`}
           </div>
         </div>
         <div class="profile-score">
           ${player.rating}
           <span>ELO</span>
         </div>
+      </section>
+      <div class="profile-grid profile-grid-featured">
+        ${statCard("Record", recordText(player))}
+        ${statCard("Games Played", player.gamesPlayed)}
+        ${statCard("Win Rate", `${player.winPercentage}%`, player.winPercentage >= 50 ? "good" : player.gamesPlayed > 0 ? "bad" : "")}
+        ${statCard("Highest ELO", player.highestRating)}
+      </div>
+      <section class="profile-dashboard">
+        <article class="profile-card">
+          <div class="profile-card-header">
+            <span>Performance</span>
+            <strong>${escapeHtml(getPlayerStatus(player))}</strong>
+          </div>
+          <div class="meter">
+            <span style="width: ${winRate}%"></span>
+          </div>
+          <div class="profile-metrics">
+            <div>
+              <span>Win Rate</span>
+              <strong>${player.winPercentage}%</strong>
+            </div>
+            <div>
+              <span>Last Change</span>
+              <strong class="${change >= 0 ? "good" : "bad"}">${change === null || change === undefined ? "0" : signed(change)}</strong>
+            </div>
+            <div>
+              <span>Goal Diff</span>
+              <strong class="${player.goalDifferential >= 0 ? "good" : "bad"}">${signed(player.goalDifferential)}</strong>
+            </div>
+          </div>
+        </article>
+        <article class="profile-card">
+          <div class="profile-card-header">
+            <span>Scoring Pace</span>
+            <strong>${escapeHtml(player.positionGroup)}</strong>
+          </div>
+          <div class="profile-metrics stacked">
+            <div>
+              <span>Goals For</span>
+              <strong>${player.goalsFor}</strong>
+              <small>${goalsForPerGame} per game</small>
+            </div>
+            <div>
+              <span>Goals Against</span>
+              <strong>${player.goalsAgainst}</strong>
+              <small>${goalsAgainstPerGame} per game</small>
+            </div>
+          </div>
+        </article>
+        <article class="profile-card">
+          <div class="profile-card-header">
+            <span>Club Attachment</span>
+            <strong>${primaryClub ? escapeHtml(primaryClub.name) : "Unattached"}</strong>
+          </div>
+          ${clubs.length ? `
+            <div class="profile-club-list">
+              ${clubs.map(club => `
+                <div>
+                  <strong>${escapeHtml(club.name)}</strong>
+                  <span>ID ${escapeHtml(club.clubId)} | ${club.isVerified ? "Verified" : "Core"}${club.isProtected ? " | Protected" : ""}</span>
+                </div>
+              `).join("")}
+            </div>
+          ` : `<p class="muted-line">This player has not attached a club yet.</p>`}
+        </article>
       </section>
       <div class="profile-grid">
         ${statCard("Goals For", player.goalsFor)}

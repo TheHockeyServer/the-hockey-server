@@ -146,6 +146,17 @@ async function getPlayerProfile(userId) {
   if (!player) return null;
 
   const rankedPlayer = rankPlayers(allPlayers).find(item => item.userId === userId);
+  const clubs = await clubStore.getClubs();
+  const registeredClubs = clubs
+    .filter(club => (club.registeredUserIds ?? []).includes(userId))
+    .map(club => ({
+      clubId: club.clubId,
+      name: club.name,
+      aliases: club.aliases ?? [],
+      isProtected: Boolean(club.isProtected),
+      isVerified: Boolean(club.isVerified),
+      mode: club.mode ?? "core",
+    }));
 
   if (!database.isDatabaseEnabled()) {
     const data = readJsonFile(RATINGS_PATH, { matches: [] });
@@ -157,6 +168,7 @@ async function getPlayerProfile(userId) {
     return {
       ...player,
       rank: rankedPlayer?.rank ?? null,
+      registeredClubs,
       recentMatches,
     };
   }
@@ -175,6 +187,7 @@ async function getPlayerProfile(userId) {
   return {
     ...player,
     rank: rankedPlayer?.rank ?? null,
+    registeredClubs,
     recentMatches: matchesResult.rows.map(row => row.payload),
   };
 }
