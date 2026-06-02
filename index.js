@@ -123,6 +123,7 @@ async function start() {
     const databaseHost = database.getDatabaseHost();
 
     if (databaseHost) {
+      console.log(`Using database source: ${database.getDatabaseSource()}`);
       console.log(`Using database host: ${databaseHost}`);
     }
 
