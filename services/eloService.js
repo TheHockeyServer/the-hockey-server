@@ -1,6 +1,12 @@
 const ratingStore = require("./ratingStore");
 
-const K_FACTOR = 32;
+const DEFAULT_K_FACTOR = 40;
+
+function getKFactor() {
+  const value = Number(process.env.ELO_K_FACTOR ?? DEFAULT_K_FACTOR);
+
+  return Number.isFinite(value) && value > 0 ? value : DEFAULT_K_FACTOR;
+}
 
 function getTeamPlayers(team) {
   return Object.values(team);
@@ -33,7 +39,7 @@ async function updateTeamPlayers(players, opponentAverageRating, outcome, goalsF
     const storedPlayer = await ratingStore.getOrCreatePlayer(player.userId, player.username);
     const oldRating = storedPlayer.rating;
     const expectedScore = getExpectedScore(oldRating, opponentAverageRating);
-    const ratingChange = Math.round(K_FACTOR * (outcome - expectedScore));
+    const ratingChange = Math.round(getKFactor() * (outcome - expectedScore));
     const newRating = oldRating + ratingChange;
 
     updatedPlayers.push({
@@ -113,7 +119,8 @@ async function recordMatchResult(match, teamAScore, teamBScore) {
 }
 
 module.exports = {
-  K_FACTOR,
+  DEFAULT_K_FACTOR,
+  getKFactor,
   getAverageRating,
   recordMatchResult,
 };
