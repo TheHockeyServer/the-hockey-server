@@ -120,6 +120,12 @@ if (!token) {
 
 async function start() {
   try {
+    const databaseHost = database.getDatabaseHost();
+
+    if (databaseHost) {
+      console.log(`Using database host: ${databaseHost}`);
+    }
+
     await database.initDatabase();
     startWebServer();
     await client.login(token);

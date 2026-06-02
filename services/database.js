@@ -1,11 +1,23 @@
 const { Pool } = require("pg");
 
-const DATABASE_URL = process.env.DATABASE_URL;
+const DATABASE_URL = process.env.DATABASE_CONNECTION_URL
+  ?? process.env.DATABASE_PUBLIC_URL
+  ?? process.env.DATABASE_URL;
 const useDatabase = Boolean(DATABASE_URL);
 
 let pool = null;
 let initialized = false;
 let initPromise = null;
+
+function getDatabaseHost() {
+  if (!DATABASE_URL) return null;
+
+  try {
+    return new URL(DATABASE_URL).hostname;
+  } catch {
+    return "unparseable-host";
+  }
+}
 
 function getPool() {
   if (!useDatabase) return null;
@@ -116,6 +128,7 @@ async function initDatabase() {
 }
 
 module.exports = {
+  getDatabaseHost,
   initDatabase,
   isDatabaseEnabled: () => useDatabase,
   query,
