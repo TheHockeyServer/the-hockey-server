@@ -228,6 +228,39 @@ button {
   cursor: pointer;
 }
 
+button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.primary-link,
+.secondary-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 3rem;
+  padding: 0 1rem;
+  border: 1px solid var(--line);
+  font-weight: 900;
+  text-align: center;
+  text-decoration: none;
+}
+
+.primary-link {
+  background: var(--purple);
+  color: #fff;
+}
+
+.secondary-link {
+  background: rgba(255, 255, 255, 0.055);
+  color: var(--muted);
+}
+
+.primary-link.disabled {
+  pointer-events: none;
+  opacity: 0.55;
+}
+
 .view {
   display: grid;
   gap: 1rem;
@@ -649,6 +682,129 @@ button {
   white-space: nowrap;
 }
 
+.registration-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 1.25rem;
+  align-items: center;
+  min-height: 14rem;
+  padding: clamp(1rem, 4vw, 1.75rem);
+  border: 1px solid rgba(155, 53, 255, 0.45);
+  background:
+    radial-gradient(circle at 88% 18%, rgba(246, 234, 58, 0.2), transparent 14rem),
+    linear-gradient(135deg, rgba(155, 53, 255, 0.22), rgba(255, 255, 255, 0.035));
+}
+
+.registration-hero h2 {
+  margin: 0;
+  font-size: clamp(2rem, 7vw, 4rem);
+  line-height: 0.95;
+  text-transform: uppercase;
+}
+
+.registration-hero p:not(.eyebrow) {
+  max-width: 42rem;
+  margin: 0.8rem 0 0;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.registration-actions {
+  display: grid;
+  gap: 0.55rem;
+  min-width: 11rem;
+}
+
+.registration-steps,
+.registration-grid {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.registration-steps {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.registration-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.registration-card {
+  display: grid;
+  align-content: start;
+  gap: 0.8rem;
+  min-height: 25rem;
+  padding: clamp(1rem, 3vw, 1.35rem);
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  background:
+    radial-gradient(circle at 100% 0%, rgba(155, 53, 255, 0.18), transparent 14rem),
+    rgba(8, 8, 11, 0.64);
+}
+
+.registration-card > span {
+  color: var(--yellow);
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.registration-card h3 {
+  margin: 0;
+  font-size: clamp(1.5rem, 5vw, 2.25rem);
+  text-transform: uppercase;
+}
+
+.registration-card p,
+.registration-card li {
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.registration-card ul {
+  display: grid;
+  gap: 0.45rem;
+  margin: 0 0 auto;
+  padding-left: 1.2rem;
+}
+
+.registration-card form {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.registration-card label {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.registration-card label span {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.registration-card label small {
+  color: var(--yellow);
+}
+
+.registration-notice {
+  display: grid;
+  gap: 0.25rem;
+  padding: 0.9rem 1rem;
+  border-left: 4px solid var(--green);
+  background: rgba(49, 216, 121, 0.1);
+}
+
+.registration-notice.error {
+  border-left-color: var(--red);
+  background: rgba(255, 76, 106, 0.1);
+}
+
+.registration-notice span {
+  color: var(--muted);
+}
+
 .insight-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -896,6 +1052,8 @@ button {
   .podium,
   .profile-grid,
   .profile-dashboard,
+  .registration-grid,
+  .registration-steps,
   .insight-grid,
   .feature-grid {
     grid-template-columns: 1fr;
@@ -921,8 +1079,13 @@ button {
 
   .profile-panel,
   .player-hero-panel,
+  .registration-hero,
   .club-row {
     grid-template-columns: 1fr;
+  }
+
+  .registration-actions {
+    min-width: 0;
   }
 
   .player-hero-copy h2 {

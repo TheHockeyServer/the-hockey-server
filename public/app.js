@@ -2,6 +2,7 @@ const view = document.querySelector("#view");
 const searchInput = document.querySelector("#searchInput");
 const searchButton = document.querySelector("#searchButton");
 const heroStat = document.querySelector("#heroStat");
+const accountLink = document.querySelector("#accountLink");
 const navLinks = [...document.querySelectorAll("[data-nav]")];
 
 const leaderboardState = {
@@ -14,6 +15,7 @@ const routes = {
   "/leaderboard": renderLeaderboard,
   "/clubs": renderClubs,
   "/matches": renderMatches,
+  "/register": renderRegister,
 };
 
 const positionTabs = [
@@ -103,6 +105,21 @@ async function fetchJson(url) {
   }
 
   return response.json();
+}
+
+async function postJson(url, body = {}) {
+  const response = await fetch(url, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  const payload = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    throw new Error(payload.error ?? `Request failed: ${response.status}`);
+  }
+
+  return payload;
 }
 
 function setLoading(title = "Loading") {
@@ -199,6 +216,15 @@ async function loadOverview() {
     updateHero(overview);
   } catch (error) {
     updateHero({ topPlayers: [] });
+  }
+}
+
+async function loadAccountLink() {
+  try {
+    const auth = await fetchJson("/api/auth/me");
+    accountLink.textContent = auth.authenticated ? auth.user.username : "Register";
+  } catch {
+    accountLink.textContent = "Register";
   }
 }
 
@@ -354,6 +380,102 @@ async function renderPlayer(userId) {
         <p>This profile is not in the RANKD database yet.</p>
       </div>
     `;
+  }
+}
+
+function registrationNotice(message, type = "success") {
+  return `
+    <div class="registration-notice ${type}">
+      <strong>${type === "success" ? "Registration Complete" : "Registration Issue"}</strong>
+      <span>${escapeHtml(message)}</span>
+    </div>
+  `;
+}
+
+async function renderRegister() {
+  setActiveNav();
+  setLoading("Loading registration");
+
+  try {
+    const auth = await fetchJson("/api/auth/me");
+
+    if (!auth.authenticated) {
+      view.innerHTML = `
+        <section class="registration-hero">
+          <div>
+            <p class="eyebrow">RANKD Player Access</p>
+            <h2>Register With Discord</h2>
+            <p>Connect your Discord account so RANKD can securely create your player profile, initialize your ELO, and assign your server role.</p>
+          </div>
+          <a class="primary-link ${auth.configured ? "" : "disabled"}" href="${auth.configured ? "/auth/discord" : "#"}" data-auth-link>
+            ${auth.configured ? "Continue With Discord" : "Discord Login Not Configured"}
+          </a>
+        </section>
+        <div class="registration-steps">
+          ${statCard("1", "Verify Discord")}
+          ${statCard("2", "Choose Registration")}
+          ${statCard("3", "Enter RANKD")}
+        </div>
+      `;
+      return;
+    }
+
+    const playerRegistered = Boolean(auth.registration);
+    const clubRegistered = auth.clubs.length > 0;
+
+    view.innerHTML = `
+      <section class="registration-hero signed-in">
+        <div>
+          <p class="eyebrow">Signed In With Discord</p>
+          <h2>${escapeHtml(auth.user.username)}</h2>
+          <p>Choose the registration that matches how you plan to play Core ELO.</p>
+          <div class="stat-strip">
+            <span class="pill">${playerRegistered || clubRegistered ? "Registered" : "Registration Needed"}</span>
+            ${clubRegistered ? `<span class="pill">${escapeHtml(auth.clubs.map(club => club.name).join(", "))}</span>` : ""}
+          </div>
+        </div>
+        <div class="registration-actions">
+          ${playerRegistered || clubRegistered ? `<a class="primary-link" href="${auth.profileUrl}">View My Profile</a>` : ""}
+          <a class="secondary-link" href="/auth/logout" data-auth-link>Log Out</a>
+        </div>
+      </section>
+      <div id="registrationNotice"></div>
+      <section class="registration-grid">
+        <article class="registration-card">
+          <span>Option One</span>
+          <h3>RANKD Player</h3>
+          <p>Choose this if you do not plan to provide a personal EASHL club for Core ELO match lookup.</p>
+          <ul>
+            <li>Initializes your profile at 2500 ELO</li>
+            <li>Assigns the RANKD Player role</li>
+            <li>Removes the UNVERIFIED role</li>
+          </ul>
+          <button type="button" id="registerPlayerButton">${playerRegistered ? "Update Player Registration" : "Register As Player"}</button>
+        </article>
+        <article class="registration-card">
+          <span>Option Two</span>
+          <h3>Register A Club</h3>
+          <p>Choose this if your club may be used for Core ELO games. Existing club IDs can be shared by multiple loyal club members.</p>
+          <form id="clubRegistrationForm">
+            <label>
+              <span>Club Name</span>
+              <input name="clubName" minlength="2" required placeholder="Enter EASHL club name">
+            </label>
+            <label>
+              <span>Club ID</span>
+              <input name="clubId" minlength="2" required placeholder="Enter numbers only">
+            </label>
+            <label>
+              <span>Alias <small>Optional</small></span>
+              <input name="alias" placeholder="Short club name">
+            </label>
+            <button type="submit">${clubRegistered ? "Attach Another Club" : "Register Club"}</button>
+          </form>
+        </article>
+      </section>
+    `;
+  } catch (error) {
+    setError(error);
   }
 }
 
@@ -575,9 +697,59 @@ document.addEventListener("click", event => {
   const link = event.target.closest("a");
 
   if (!link || link.origin !== window.location.origin) return;
+  if (link.hasAttribute("data-auth-link")) return;
 
   event.preventDefault();
   navigate(link.pathname);
+});
+
+document.addEventListener("submit", async event => {
+  if (event.target.id !== "clubRegistrationForm") return;
+
+  event.preventDefault();
+  const form = event.target;
+  const notice = document.querySelector("#registrationNotice");
+  const button = form.querySelector("button[type='submit']");
+  const data = new FormData(form);
+
+  button.disabled = true;
+  button.textContent = "Registering...";
+
+  try {
+    const result = await postJson("/api/register/club", {
+      clubName: data.get("clubName"),
+      clubId: data.get("clubId"),
+      alias: data.get("alias"),
+    });
+    notice.innerHTML = registrationNotice(result.message);
+    await loadAccountLink();
+  } catch (error) {
+    notice.innerHTML = registrationNotice(error.message, "error");
+  } finally {
+    button.disabled = false;
+    button.textContent = "Register Club";
+  }
+});
+
+document.addEventListener("click", async event => {
+  const button = event.target.closest("#registerPlayerButton");
+
+  if (!button) return;
+
+  const notice = document.querySelector("#registrationNotice");
+  button.disabled = true;
+  button.textContent = "Registering...";
+
+  try {
+    const result = await postJson("/api/register/player");
+    notice.innerHTML = registrationNotice(result.message);
+    await loadAccountLink();
+  } catch (error) {
+    notice.innerHTML = registrationNotice(error.message, "error");
+  } finally {
+    button.disabled = false;
+    button.textContent = "Update Player Registration";
+  }
 });
 
 document.addEventListener("change", event => {
@@ -600,4 +772,5 @@ searchInput.addEventListener("keydown", event => {
 window.addEventListener("popstate", route);
 
 loadOverview();
+loadAccountLink();
 route();

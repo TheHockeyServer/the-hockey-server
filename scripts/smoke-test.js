@@ -31,6 +31,7 @@ async function checkWebServer() {
     const baseUrl = `http://127.0.0.1:${port}`;
     const paths = [
       "/health",
+      "/api/auth/me",
       "/api/overview",
       "/api/leaderboard?limit=5&position=all&sort=elo",
       "/api/clubs",
@@ -38,6 +39,7 @@ async function checkWebServer() {
       "/leaderboard",
       "/clubs",
       "/matches",
+      "/register",
     ];
 
     for (const path of paths) {

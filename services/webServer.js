@@ -3,7 +3,11 @@ const express = require("express");
 const path = require("path");
 
 const chelheadWebhookStore = require("./chelheadWebhookStore");
+const clubStore = require("./clubStore");
+const playerRegistrationStore = require("./playerRegistrationStore");
+const { registerCoreClub, registerCorePlayer } = require("./registrationService");
 const statsService = require("./statsService");
+const webAuth = require("./webAuth");
 
 const DEFAULT_PORT = 8080;
 const PUBLIC_DIR = path.join(__dirname, "..", "public");
@@ -54,6 +58,102 @@ function createWebServer() {
       ok: true,
       service: "RANKD bot",
     });
+  });
+
+  app.get("/auth/discord", webAuth.beginDiscordLogin);
+  app.get("/auth/discord/callback", async (req, res) => {
+    try {
+      await webAuth.completeDiscordLogin(req, res);
+    } catch (error) {
+      console.error("Discord website login failed:", error);
+      res.status(500).send("Discord login could not be completed. Please try again.");
+    }
+  });
+  app.get("/auth/logout", webAuth.logout);
+
+  app.get("/api/auth/me", async (req, res) => {
+    const session = webAuth.getSession(req);
+
+    if (!session) {
+      return res.json({
+        authenticated: false,
+        configured: Boolean(process.env.CLIENT_ID && process.env.DISCORD_CLIENT_SECRET && process.env.SESSION_SECRET),
+      });
+    }
+
+    try {
+      const [registration, clubs] = await Promise.all([
+        playerRegistrationStore.getRegisteredPlayer(session.user.id),
+        clubStore.getClubs(),
+      ]);
+
+      return res.json({
+        authenticated: true,
+        user: session.user,
+        registration,
+        clubs: clubs
+          .filter(club => (club.registeredUserIds ?? []).includes(session.user.id))
+          .map(club => ({
+            clubId: club.clubId,
+            name: club.name,
+            aliases: club.aliases ?? [],
+          })),
+        profileUrl: `/players/${session.user.id}`,
+      });
+    } catch (error) {
+      console.error("Failed to load website registration status:", error);
+      return res.status(500).json({ error: "Failed to load registration status." });
+    }
+  });
+
+  app.post("/api/register/player", express.json(), webAuth.requireSession, async (req, res) => {
+    try {
+      const result = await registerCorePlayer({
+        userId: req.rankdUser.id,
+        username: req.rankdUser.username,
+      });
+
+      return res.json({
+        ok: true,
+        message: result.alreadyRegistered
+          ? "Your RANKD player registration has been updated."
+          : "You are registered for RANKD Core ELO.",
+        profileUrl: `/players/${req.rankdUser.id}`,
+        roles: result.roles,
+      });
+    } catch (error) {
+      console.error("Website player registration failed:", error);
+      return res.status(400).json({ error: error.message });
+    }
+  });
+
+  app.post("/api/register/club", express.json(), webAuth.requireSession, async (req, res) => {
+    try {
+      const result = await registerCoreClub({
+        userId: req.rankdUser.id,
+        username: req.rankdUser.username,
+        clubId: req.body.clubId,
+        clubName: req.body.clubName,
+        alias: req.body.alias,
+      });
+
+      if (!result.success) {
+        return res.status(400).json({ error: result.message });
+      }
+
+      return res.json({
+        ok: true,
+        message: result.attachedToExisting
+          ? `You are now attached to ${result.club.name}.`
+          : `${result.club.name} has been registered.`,
+        club: result.club,
+        profileUrl: `/players/${req.rankdUser.id}`,
+        roles: result.roles,
+      });
+    } catch (error) {
+      console.error("Website club registration failed:", error);
+      return res.status(400).json({ error: error.message });
+    }
   });
 
   app.get("/api/overview", async (_req, res) => {
@@ -167,7 +267,7 @@ function createWebServer() {
     }
   });
 
-  app.get(["/", "/leaderboard", "/clubs", "/matches", "/players/:userId"], (_req, res) => {
+  app.get(["/", "/leaderboard", "/clubs", "/matches", "/register", "/players/:userId"], (_req, res) => {
     res.sendFile(path.join(PUBLIC_DIR, "index.html"));
   });
 

@@ -148,8 +148,8 @@ function mergeAliases(existingAliases, aliases) {
 
 async function registerClub({ clubId, name, alias, registeredBy }) {
   const now = Date.now();
-  const trimmedClubId = String(clubId).trim();
-  const trimmedName = String(name).trim();
+  const trimmedClubId = String(clubId ?? "").trim();
+  const trimmedName = String(name ?? "").trim();
   const aliases = parseAlias(alias);
 
   if (trimmedClubId.length < 2) {
