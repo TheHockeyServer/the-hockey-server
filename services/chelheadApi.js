@@ -59,23 +59,17 @@ async function searchClubs(clubName) {
   });
 }
 
-function getClubCollection(payload) {
-  if (Array.isArray(payload)) return payload;
-  if (Array.isArray(payload?.clubs)) return payload.clubs;
-  if (Array.isArray(payload?.results)) return payload.results;
-  if (Array.isArray(payload?.data)) return payload.data;
-  if (payload?.clubs && typeof payload.clubs === "object") {
-    return Object.entries(payload.clubs).map(([clubId, club]) => ({
-      clubId,
-      ...club,
-    }));
-  }
-  return [];
-}
-
 function normalizeClubSearchResult(club) {
-  const clubId = club?.clubId ?? club?.clubid ?? club?.id ?? club?.club_id;
-  const name = club?.name ?? club?.clubName ?? club?.clubname ?? club?.club_name;
+  const clubId = club?.clubId
+    ?? club?.clubid
+    ?? club?.id
+    ?? club?.club_id
+    ?? club?.clubID;
+  const name = club?.name
+    ?? club?.clubName
+    ?? club?.clubname
+    ?? club?.club_name
+    ?? club?.club;
 
   if (!clubId || !name) return null;
 
@@ -86,22 +80,86 @@ function normalizeClubSearchResult(club) {
   };
 }
 
+function collectClubSearchResults(payload, results = [], context = "", depth = 0) {
+  if (depth > 6 || payload === null || payload === undefined) return results;
+
+  if (Array.isArray(payload)) {
+    payload.forEach(value => collectClubSearchResults(value, results, context, depth + 1));
+    return results;
+  }
+
+  if (typeof payload !== "object") return results;
+
+  const normalized = normalizeClubSearchResult(payload);
+  if (normalized) results.push(normalized);
+
+  for (const [key, value] of Object.entries(payload)) {
+    const keyLooksLikeClubId = /^\d+$/.test(key);
+    const contextContainsClubs = /clubs?|results?|data|items?/i.test(context);
+
+    if (keyLooksLikeClubId && typeof value === "string" && contextContainsClubs) {
+      results.push({ clubId: key, name: value, platform: null });
+      continue;
+    }
+
+    if (keyLooksLikeClubId && value && typeof value === "object" && !Array.isArray(value)) {
+      collectClubSearchResults({ clubId: key, ...value }, results, key, depth + 1);
+      continue;
+    }
+
+    collectClubSearchResults(value, results, key, depth + 1);
+  }
+
+  return results;
+}
+
 function normalizeClubSearchPayload(payload) {
   const unique = new Map();
 
-  for (const club of getClubCollection(payload)) {
-    const normalized = normalizeClubSearchResult(club);
-
-    if (normalized && !unique.has(normalized.clubId)) {
-      unique.set(normalized.clubId, normalized);
+  for (const club of collectClubSearchResults(payload)) {
+    if (!unique.has(club.clubId)) {
+      unique.set(club.clubId, club);
     }
   }
 
   return Array.from(unique.values()).slice(0, 20);
 }
 
+function normalizeClubSearchTerm(clubName) {
+  return String(clubName ?? "")
+    .trim()
+    .split(/\s+/)
+    .map(word => {
+      if (/^(hc|hockey|eashl)$/i.test(word)) {
+        return word.toUpperCase();
+      }
+
+      return `${word.charAt(0).toUpperCase()}${word.slice(1).toLowerCase()}`;
+    })
+    .join(" ");
+}
+
 async function searchClubOptions(clubName) {
-  return normalizeClubSearchPayload(await searchClubs(clubName));
+  const originalTerm = String(clubName ?? "").trim();
+  const originalPayload = await searchClubs(originalTerm);
+  const originalResults = normalizeClubSearchPayload(originalPayload);
+
+  if (originalResults.length) return originalResults;
+
+  const normalizedTerm = normalizeClubSearchTerm(originalTerm);
+  if (!normalizedTerm || normalizedTerm === originalTerm) {
+    console.warn("CHELHead club search returned no usable results:", JSON.stringify(originalPayload).slice(0, 2_000));
+    return [];
+  }
+
+  const normalizedPayload = await searchClubs(normalizedTerm);
+  const normalizedResults = normalizeClubSearchPayload(normalizedPayload);
+
+  if (!normalizedResults.length) {
+    console.warn("CHELHead club search returned no usable results:", JSON.stringify(normalizedPayload).slice(0, 2_000));
+  }
+
+  return normalizedResults;
 }
 
 async function checkConnection() {
@@ -133,6 +191,7 @@ module.exports = {
   getConfig,
   isConfigured,
   normalizeClubSearchPayload,
+  normalizeClubSearchTerm,
   request,
   searchClubOptions,
   searchClubs,

@@ -6,7 +6,10 @@ const {
   findMatchingRankdMatches,
   parseCompletedResult,
 } = require("../services/chelheadResultProcessor");
-const { normalizeClubSearchPayload } = require("../services/chelheadApi");
+const {
+  normalizeClubSearchPayload,
+  normalizeClubSearchTerm,
+} = require("../services/chelheadApi");
 const matchService = require("../services/matchService");
 
 async function checkModules() {
@@ -135,6 +138,9 @@ function checkChelheadResultMatching() {
 }
 
 function checkChelheadClubSearchNormalization() {
+  assert.equal(normalizeClubSearchTerm("flyguyz hc"), "Flyguyz HC");
+  assert.equal(normalizeClubSearchTerm("  gretzky legacy  "), "Gretzky Legacy");
+
   assert.deepEqual(normalizeClubSearchPayload({
     clubs: [
       { clubId: "5760", name: "FlyGuyz HC", platform: "common-gen5" },
@@ -146,6 +152,29 @@ function checkChelheadClubSearchNormalization() {
   assert.deepEqual(normalizeClubSearchPayload({
     clubs: {
       "5760": { name: "FlyGuyz HC" },
+    },
+  }), [
+    { clubId: "5760", name: "FlyGuyz HC", platform: null },
+  ]);
+
+  assert.deepEqual(normalizeClubSearchPayload({
+    success: true,
+    data: {
+      results: {
+        clubs: {
+          "5760": "FlyGuyz HC",
+        },
+      },
+    },
+  }), [
+    { clubId: "5760", name: "FlyGuyz HC", platform: null },
+  ]);
+
+  assert.deepEqual(normalizeClubSearchPayload({
+    data: {
+      clubs: [
+        { clubID: "5760", club: "FlyGuyz HC" },
+      ],
     },
   }), [
     { clubId: "5760", name: "FlyGuyz HC", platform: null },
