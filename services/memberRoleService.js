@@ -4,11 +4,27 @@ const ROLE_NAMES = {
   unverified: "UNVERIFIED",
 };
 
-async function getGuild() {
-  const client = global.client;
-  const guildId = process.env.GUILD_ID;
+const DISCORD_READY_TIMEOUT_MS = 20_000;
 
-  if (!client?.isReady() || !guildId) {
+async function waitForDiscordClient() {
+  const client = global.client;
+
+  if (!client) return null;
+
+  const deadline = Date.now() + DISCORD_READY_TIMEOUT_MS;
+
+  while (!client.isReady() && Date.now() < deadline) {
+    await new Promise(resolve => setTimeout(resolve, 250));
+  }
+
+  return client.isReady() ? client : null;
+}
+
+async function getGuild() {
+  const guildId = process.env.GUILD_ID;
+  const client = await waitForDiscordClient();
+
+  if (!client || !guildId) {
     throw new Error("The Discord bot is not ready to assign server roles.");
   }
 

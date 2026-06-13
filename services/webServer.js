@@ -55,6 +55,7 @@ function createWebServer() {
 
   app.get("/health", (_req, res) => {
     res.status(200).json({
+      botReady: Boolean(global.client?.isReady()),
       ok: true,
       service: "RANKD bot",
     });
