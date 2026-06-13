@@ -135,6 +135,32 @@ async function getPendingApplications() {
   return result.rows.map(mapApplication);
 }
 
+async function getApplicationsByOwner(ownerUserId) {
+  if (!database.isDatabaseEnabled()) {
+    return readStore().applications
+      .filter(application => application.ownerUserId === ownerUserId)
+      .sort((a, b) => b.createdAt - a.createdAt);
+  }
+
+  const result = await database.query(
+    "SELECT * FROM team_elo_applications WHERE owner_user_id = $1 ORDER BY created_at DESC",
+    [ownerUserId]
+  );
+  return result.rows.map(mapApplication);
+}
+
+async function getTeamsByOwner(ownerUserId) {
+  if (!database.isDatabaseEnabled()) {
+    return readStore().teams.filter(team => team.ownerUserId === ownerUserId);
+  }
+
+  const result = await database.query(
+    "SELECT * FROM team_elo_clubs WHERE owner_user_id = $1 ORDER BY club_name ASC",
+    [ownerUserId]
+  );
+  return result.rows.map(mapTeam);
+}
+
 async function createApplication({ clubId, clubName, ownerUserId, ownerUsername, notes }) {
   const trimmedClubId = String(clubId ?? "").trim();
   const trimmedClubName = String(clubName ?? "").trim();
@@ -345,7 +371,9 @@ module.exports = {
   denyApplication,
   findTeams,
   getApplication,
+  getApplicationsByOwner,
   getPendingApplications,
   getStartingRating,
   getTeamByClubId,
+  getTeamsByOwner,
 };

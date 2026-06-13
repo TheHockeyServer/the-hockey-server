@@ -47,6 +47,7 @@ async function checkWebServer() {
       "/clubs",
       "/matches",
       "/register",
+      "/team-rankd",
     ];
 
     for (const path of paths) {

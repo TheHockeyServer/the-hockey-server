@@ -16,6 +16,7 @@ const routes = {
   "/clubs": renderClubs,
   "/matches": renderMatches,
   "/register": renderRegister,
+  "/team-rankd": renderTeamRankd,
 };
 
 const positionTabs = [
@@ -473,6 +474,154 @@ async function renderRegister() {
           </form>
         </article>
       </section>
+      <section class="setup-next-step">
+        <div>
+          <span>Optional Competitive Path</span>
+          <h3>Building A Team?</h3>
+          <p>After attaching your club above, apply for exclusive Team RANKD ownership and enter the organized Team ELO ladder.</p>
+        </div>
+        <a class="primary-link" href="/team-rankd">Open Team RANKD</a>
+      </section>
+    `;
+  } catch (error) {
+    setError(error);
+  }
+}
+
+function teamApplicationCard(application) {
+  const statusClass = application.status === "approved"
+    ? "good"
+    : application.status === "denied"
+      ? "bad"
+      : "";
+
+  return `
+    <article class="team-application">
+      <div>
+        <span>Application #${application.id}</span>
+        <h3>${escapeHtml(application.clubName)}</h3>
+        <p>Club ID ${escapeHtml(application.clubId)} | Submitted ${escapeHtml(formatDate(application.createdAt))}</p>
+        ${application.notes ? `<p>${escapeHtml(application.notes)}</p>` : ""}
+      </div>
+      <strong class="${statusClass}">${escapeHtml(application.status)}</strong>
+    </article>
+  `;
+}
+
+function staffApplicationCard(application) {
+  return `
+    <article class="team-application staff-review" data-application-id="${application.id}">
+      <div>
+        <span>Application #${application.id}</span>
+        <h3>${escapeHtml(application.clubName)}</h3>
+        <p>Club ID ${escapeHtml(application.clubId)} | Applicant ${escapeHtml(application.ownerUsername)}</p>
+        <p>${escapeHtml(application.notes || "No notes provided.")}</p>
+      </div>
+      <div class="review-actions">
+        <button type="button" data-team-approve="${application.id}">Approve</button>
+        <button class="danger-button" type="button" data-team-deny="${application.id}">Deny</button>
+      </div>
+    </article>
+  `;
+}
+
+async function renderTeamRankd() {
+  setActiveNav();
+  setLoading("Loading Team RANKD");
+
+  try {
+    const auth = await fetchJson("/api/auth/me");
+
+    if (!auth.authenticated) {
+      view.innerHTML = `
+        <section class="registration-hero">
+          <div>
+            <p class="eyebrow">Protected Team Competition</p>
+            <h2>Team RANKD</h2>
+            <p>Connect Discord to apply for protected club ownership, manage your future roster, and compete on the Team ELO ladder.</p>
+          </div>
+          <a class="primary-link" href="/auth/discord" data-auth-link>Continue With Discord</a>
+        </section>
+      `;
+      return;
+    }
+
+    const account = await fetchJson("/api/team-rankd/me");
+    const pending = account.applications.filter(application => application.status === "pending");
+    const approved = account.teams;
+    let staffApplications = [];
+
+    if (account.isStaff) {
+      staffApplications = await fetchJson("/api/team-rankd/applications/pending");
+    }
+
+    view.innerHTML = `
+      <section class="registration-hero signed-in">
+        <div>
+          <p class="eyebrow">Team RANKD Control Center</p>
+          <h2>${escapeHtml(auth.user.username)}</h2>
+          <p>Apply for exclusive Team RANKD ownership using a club already attached to your Core ELO account.</p>
+          <div class="stat-strip">
+            <span class="pill">${approved.length} Approved</span>
+            <span class="pill">${pending.length} Pending</span>
+            ${account.isStaff ? `<span class="pill">Staff Review Access</span>` : ""}
+          </div>
+        </div>
+        <a class="secondary-link" href="/auth/logout" data-auth-link>Log Out</a>
+      </section>
+      <div id="teamRankdNotice"></div>
+      <section class="team-rankd-grid">
+        <article class="registration-card team-apply-card">
+          <span>Ownership Application</span>
+          <h3>Protect Your Club</h3>
+          <p>Approved Team RANKD ownership reserves the club ID to you. Core ELO club attachments remain shareable.</p>
+          ${account.clubs.length ? `
+            <form id="teamApplicationForm">
+              <label>
+                <span>Attached Club</span>
+                <select name="clubId" required>
+                  ${account.clubs.map(club => `<option value="${escapeHtml(club.clubId)}">${escapeHtml(club.name)} (${escapeHtml(club.clubId)})</option>`).join("")}
+                </select>
+              </label>
+              <label>
+                <span>Notes <small>Optional</small></span>
+                <textarea name="notes" maxlength="500" placeholder="Anything staff should know about your ownership request"></textarea>
+              </label>
+              <button type="submit">Submit Team Application</button>
+            </form>
+          ` : `
+            <div class="empty-state compact">
+              <h2>Attach A Club First</h2>
+              <p>Register or attach your club through Core ELO before requesting protected Team RANKD ownership.</p>
+              <a class="primary-link" href="/register">Go To Registration</a>
+            </div>
+          `}
+        </article>
+        <article class="registration-card">
+          <span>Your Team RANKD Activity</span>
+          <h3>Applications</h3>
+          <div class="application-list">
+            ${account.applications.length
+              ? account.applications.map(teamApplicationCard).join("")
+              : `<p class="muted-line">You have not submitted a Team RANKD application yet.</p>`}
+          </div>
+        </article>
+      </section>
+      ${account.isStaff ? `
+        <section class="staff-approval-panel">
+          <div class="section-title">
+            <div>
+              <h2>Staff Approvals</h2>
+              <p>${staffApplications.length} pending Team RANKD application${staffApplications.length === 1 ? "" : "s"}</p>
+            </div>
+          </div>
+          <div class="application-list">
+            ${staffApplications.length
+              ? staffApplications.map(staffApplicationCard).join("")
+              : empty("Queue Clear", "There are no Team RANKD applications awaiting review.")}
+          </div>
+        </section>
+      ` : ""}
     `;
   } catch (error) {
     setError(error);
@@ -704,6 +853,31 @@ document.addEventListener("click", event => {
 });
 
 document.addEventListener("submit", async event => {
+  if (event.target.id === "teamApplicationForm") {
+    event.preventDefault();
+    const form = event.target;
+    const button = form.querySelector("button[type='submit']");
+    const data = new FormData(form);
+    const notice = document.querySelector("#teamRankdNotice");
+
+    button.disabled = true;
+    button.textContent = "Submitting...";
+
+    try {
+      await postJson("/api/team-rankd/applications", {
+        clubId: data.get("clubId"),
+        notes: data.get("notes"),
+      });
+      notice.innerHTML = registrationNotice("Your Team RANKD application was submitted for staff review.");
+      setTimeout(renderTeamRankd, 700);
+    } catch (error) {
+      notice.innerHTML = registrationNotice(error.message, "error");
+      button.disabled = false;
+      button.textContent = "Submit Team Application";
+    }
+    return;
+  }
+
   if (event.target.id !== "clubRegistrationForm") return;
 
   event.preventDefault();
@@ -732,6 +906,34 @@ document.addEventListener("submit", async event => {
 });
 
 document.addEventListener("click", async event => {
+  const approveButton = event.target.closest("[data-team-approve]");
+  const denyButton = event.target.closest("[data-team-deny]");
+
+  if (approveButton || denyButton) {
+    const button = approveButton ?? denyButton;
+    const applicationId = button.dataset.teamApprove ?? button.dataset.teamDeny;
+    let reason = "";
+
+    if (denyButton) {
+      reason = window.prompt("Reason for denying this Team RANKD application:");
+      if (!reason) return;
+    }
+
+    button.disabled = true;
+    button.textContent = approveButton ? "Approving..." : "Denying...";
+
+    try {
+      await postJson(`/api/team-rankd/applications/${applicationId}/${approveButton ? "approve" : "deny"}`, { reason });
+      await renderTeamRankd();
+    } catch (error) {
+      const notice = document.querySelector("#teamRankdNotice");
+      notice.innerHTML = registrationNotice(error.message, "error");
+      button.disabled = false;
+      button.textContent = approveButton ? "Approve" : "Deny";
+    }
+    return;
+  }
+
   const button = event.target.closest("#registerPlayerButton");
 
   if (!button) return;

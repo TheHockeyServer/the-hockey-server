@@ -207,7 +207,8 @@ h1 {
 
 input,
 button,
-select {
+select,
+textarea {
   min-height: 3rem;
   border: 1px solid var(--line);
   background: var(--panel);
@@ -216,9 +217,16 @@ select {
 }
 
 input,
-select {
+select,
+textarea {
   width: 100%;
   padding: 0 1rem;
+}
+
+textarea {
+  min-height: 8rem;
+  padding: 0.85rem 1rem;
+  resize: vertical;
 }
 
 button {
@@ -772,6 +780,84 @@ button:disabled {
   gap: 0.75rem;
 }
 
+.team-rankd-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: 0.75rem;
+}
+
+.team-apply-card {
+  min-height: auto;
+}
+
+.application-list {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.team-application {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.75rem;
+  align-items: start;
+  padding: 0.85rem;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.045);
+}
+
+.team-application span,
+.team-application p {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.team-application h3,
+.team-application p {
+  margin: 0.25rem 0 0;
+}
+
+.team-application > strong {
+  color: var(--yellow);
+  text-transform: uppercase;
+}
+
+.team-application > strong.good {
+  color: var(--green);
+}
+
+.team-application > strong.bad {
+  color: var(--red);
+}
+
+.staff-approval-panel {
+  display: grid;
+  gap: 0.8rem;
+  padding: clamp(1rem, 3vw, 1.35rem);
+  border: 1px solid rgba(246, 234, 58, 0.28);
+  background: rgba(8, 8, 11, 0.64);
+}
+
+.review-actions {
+  display: grid;
+  gap: 0.45rem;
+  min-width: 8rem;
+}
+
+.danger-button {
+  background: var(--red);
+}
+
+.empty-state.compact {
+  display: grid;
+  gap: 0.75rem;
+  padding: 0.9rem;
+}
+
+.empty-state.compact h2 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
 .registration-card label {
   display: grid;
   gap: 0.35rem;
@@ -786,6 +872,36 @@ button:disabled {
 
 .registration-card label small {
   color: var(--yellow);
+}
+
+.setup-next-step {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 1rem;
+  align-items: center;
+  padding: clamp(1rem, 3vw, 1.35rem);
+  border: 1px solid rgba(246, 234, 58, 0.28);
+  background:
+    linear-gradient(90deg, rgba(155, 53, 255, 0.18), rgba(246, 234, 58, 0.08)),
+    rgba(8, 8, 11, 0.64);
+}
+
+.setup-next-step span {
+  color: var(--yellow);
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.setup-next-step h3 {
+  margin: 0.35rem 0;
+  font-size: clamp(1.4rem, 4vw, 2rem);
+  text-transform: uppercase;
+}
+
+.setup-next-step p {
+  margin: 0;
+  color: var(--muted);
 }
 
 .registration-notice {
@@ -1059,6 +1175,16 @@ button:disabled {
     grid-template-columns: 1fr;
   }
 
+  .team-rankd-grid,
+  .team-application {
+    grid-template-columns: 1fr;
+  }
+
+  .review-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    min-width: 0;
+  }
+
   .feature-panel-header {
     align-items: start;
     flex-direction: column;
@@ -1080,7 +1206,8 @@ button:disabled {
   .profile-panel,
   .player-hero-panel,
   .registration-hero,
-  .club-row {
+  .club-row,
+  .setup-next-step {
     grid-template-columns: 1fr;
   }
 

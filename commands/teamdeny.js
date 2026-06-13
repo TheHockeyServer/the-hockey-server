@@ -1,5 +1,6 @@
 const { PermissionFlagsBits, SlashCommandBuilder } = require("discord.js");
 
+const { notifyReview } = require("../services/teamApprovalNotifier");
 const teamEloStore = require("../services/teamEloStore");
 
 module.exports = {
@@ -20,6 +21,12 @@ module.exports = {
       interaction.user.id,
       interaction.options.getString("reason", true)
     );
+
+    if (result.success) {
+      await notifyReview(result.application).catch(error => {
+        console.error("Failed to post Team RANKD denial notification:", error);
+      });
+    }
 
     await interaction.reply({
       content: result.success

@@ -1,6 +1,7 @@
 const { PermissionFlagsBits, SlashCommandBuilder } = require("discord.js");
 
 const { assignRoles, ROLE_NAMES } = require("../services/memberRoleService");
+const { notifyReview } = require("../services/teamApprovalNotifier");
 const teamEloStore = require("../services/teamEloStore");
 
 module.exports = {
@@ -34,6 +35,9 @@ module.exports = {
       roleMessage = `The team was approved, but role assignment needs attention: ${error.message}`;
     }
 
+    await notifyReview(result.application).catch(error => {
+      console.error("Failed to post Team RANKD approval notification:", error);
+    });
     await interaction.editReply([
       `Approved Team RANKD Application #${result.application.id}.`,
       `**${result.team.clubName}** (\`${result.team.clubId}\`) is now protected for <@${result.team.ownerUserId}>.`,

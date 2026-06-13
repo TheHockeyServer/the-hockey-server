@@ -1,6 +1,7 @@
 const { EmbedBuilder, SlashCommandBuilder } = require("discord.js");
 
 const clubStore = require("../services/clubStore");
+const { notifyNewApplication } = require("../services/teamApprovalNotifier");
 const teamEloStore = require("../services/teamEloStore");
 
 module.exports = {
@@ -68,6 +69,9 @@ module.exports = {
       )
       .setFooter({ text: "Approval reserves this club ID for Team RANKD. Core ELO registration remains shareable." });
 
+    await notifyNewApplication(result.application).catch(error => {
+      console.error("Failed to post Team RANKD application notification:", error);
+    });
     await interaction.editReply({ embeds: [embed] });
   },
 };

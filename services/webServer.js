@@ -6,9 +6,12 @@ const chelheadWebhookStore = require("./chelheadWebhookStore");
 const chelheadApi = require("./chelheadApi");
 const { processCompletedMatch } = require("./chelheadResultProcessor");
 const clubStore = require("./clubStore");
+const { assignRoles, isStaffMember, ROLE_NAMES } = require("./memberRoleService");
 const playerRegistrationStore = require("./playerRegistrationStore");
 const { registerCoreClub, registerCorePlayer } = require("./registrationService");
 const statsService = require("./statsService");
+const { notifyNewApplication, notifyReview } = require("./teamApprovalNotifier");
+const teamEloStore = require("./teamEloStore");
 const webAuth = require("./webAuth");
 
 const DEFAULT_PORT = 8080;
@@ -47,6 +50,25 @@ function verifyChelheadSignature(rawBody, signature, timestamp, secret) {
     verified: safeCompareHex(getSignatureDigest(signature), expected),
     skipped: false,
   };
+}
+
+async function requireStaff(req, res, next) {
+  const session = webAuth.getSession(req);
+
+  if (!session) {
+    return res.status(401).json({ error: "Login with Discord to continue." });
+  }
+
+  try {
+    if (!await isStaffMember(session.user.id)) {
+      return res.status(403).json({ error: "RANKD staff access is required." });
+    }
+
+    req.rankdUser = session.user;
+    return next();
+  } catch (error) {
+    return res.status(503).json({ error: error.message });
+  }
 }
 
 function createWebServer() {
@@ -160,6 +182,100 @@ function createWebServer() {
       });
     } catch (error) {
       console.error("Website club registration failed:", error);
+      return res.status(400).json({ error: error.message });
+    }
+  });
+
+  app.get("/api/team-rankd/me", webAuth.requireSession, async (req, res) => {
+    try {
+      const clubs = (await clubStore.getClubs()).filter(club =>
+        (club.registeredUserIds ?? []).includes(req.rankdUser.id)
+      );
+      const [applications, teams, staff] = await Promise.all([
+        teamEloStore.getApplicationsByOwner(req.rankdUser.id),
+        teamEloStore.getTeamsByOwner(req.rankdUser.id),
+        isStaffMember(req.rankdUser.id),
+      ]);
+
+      res.json({ clubs, applications, teams, isStaff: staff });
+    } catch (error) {
+      console.error("Failed to load Team RANKD account:", error);
+      res.status(500).json({ error: "Failed to load Team RANKD account." });
+    }
+  });
+
+  app.post("/api/team-rankd/applications", express.json(), webAuth.requireSession, async (req, res) => {
+    try {
+      const club = await clubStore.findClubById(req.body.clubId);
+
+      if (!club || !(club.registeredUserIds ?? []).includes(req.rankdUser.id)) {
+        return res.status(400).json({ error: "Attach this club to your Core ELO account before applying." });
+      }
+
+      const result = await teamEloStore.createApplication({
+        clubId: club.clubId,
+        clubName: club.name,
+        ownerUserId: req.rankdUser.id,
+        ownerUsername: req.rankdUser.username,
+        notes: req.body.notes,
+      });
+
+      if (!result.success) return res.status(400).json({ error: result.message });
+
+      await notifyNewApplication(result.application).catch(error => {
+        console.error("Failed to post Team RANKD website application notification:", error);
+      });
+      return res.json({ ok: true, application: result.application });
+    } catch (error) {
+      console.error("Website Team RANKD application failed:", error);
+      return res.status(400).json({ error: error.message });
+    }
+  });
+
+  app.get("/api/team-rankd/applications/pending", requireStaff, async (_req, res) => {
+    res.json(await teamEloStore.getPendingApplications());
+  });
+
+  app.post("/api/team-rankd/applications/:id/approve", express.json(), requireStaff, async (req, res) => {
+    try {
+      const result = await teamEloStore.approveApplication(Number(req.params.id), req.rankdUser.id);
+
+      if (!result.success) return res.status(400).json({ error: result.message });
+
+      let roleWarning = null;
+
+      try {
+        await assignRoles(result.team.ownerUserId, [ROLE_NAMES.captain, ROLE_NAMES.team]);
+      } catch (error) {
+        roleWarning = error.message;
+      }
+
+      await notifyReview(result.application).catch(error => {
+        console.error("Failed to post Team RANKD website approval notification:", error);
+      });
+      return res.json({ ok: true, application: result.application, team: result.team, roleWarning });
+    } catch (error) {
+      console.error("Website Team RANKD approval failed:", error);
+      return res.status(400).json({ error: error.message });
+    }
+  });
+
+  app.post("/api/team-rankd/applications/:id/deny", express.json(), requireStaff, async (req, res) => {
+    try {
+      const result = await teamEloStore.denyApplication(
+        Number(req.params.id),
+        req.rankdUser.id,
+        req.body.reason
+      );
+
+      if (!result.success) return res.status(400).json({ error: result.message });
+
+      await notifyReview(result.application).catch(error => {
+        console.error("Failed to post Team RANKD website denial notification:", error);
+      });
+      return res.json({ ok: true, application: result.application });
+    } catch (error) {
+      console.error("Website Team RANKD denial failed:", error);
       return res.status(400).json({ error: error.message });
     }
   });
@@ -295,7 +411,7 @@ function createWebServer() {
     }
   });
 
-  app.get(["/", "/leaderboard", "/clubs", "/matches", "/register", "/players/:userId"], (_req, res) => {
+  app.get(["/", "/leaderboard", "/clubs", "/matches", "/register", "/team-rankd", "/players/:userId"], (_req, res) => {
     res.sendFile(path.join(PUBLIC_DIR, "index.html"));
   });
 

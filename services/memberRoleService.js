@@ -1,3 +1,5 @@
+const { PermissionFlagsBits } = require("discord.js");
+
 const ROLE_NAMES = {
   player: "RANKD Player",
   captain: "Captain",
@@ -89,8 +91,21 @@ async function assignRoles(userId, roleNames) {
   return results;
 }
 
+async function getGuildMember(userId) {
+  const guild = await getGuild();
+  return guild.members.fetch(userId).catch(() => null);
+}
+
+async function isStaffMember(userId) {
+  const member = await getGuildMember(userId);
+  return Boolean(member?.permissions.has(PermissionFlagsBits.Administrator));
+}
+
 module.exports = {
   ROLE_NAMES,
   assignRegistrationRole,
   assignRoles,
+  getGuild,
+  getGuildMember,
+  isStaffMember,
 };

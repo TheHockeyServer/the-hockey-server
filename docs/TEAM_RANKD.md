@@ -26,6 +26,10 @@ Team RANKD is separate from Core ELO.
 5. Approval permanently reserves the Team RANKD club ID to that owner and assigns the existing
    `Captain` and `RANKD Teams` Discord roles.
 
+Players can complete the same flow from `/team-rankd` on the RANKD website. New applications and
+staff decisions are also posted to the `#team-approvals` Discord channel. Signed-in Discord server
+administrators can review pending applications directly on the website.
+
 ## Next Team RANKD Systems
 
 - Captain-managed roster invitations and removals
