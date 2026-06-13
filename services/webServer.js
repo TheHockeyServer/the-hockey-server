@@ -3,6 +3,7 @@ const express = require("express");
 const path = require("path");
 
 const chelheadWebhookStore = require("./chelheadWebhookStore");
+const chelheadApi = require("./chelheadApi");
 const clubStore = require("./clubStore");
 const playerRegistrationStore = require("./playerRegistrationStore");
 const { registerCoreClub, registerCorePlayer } = require("./registrationService");
@@ -56,9 +57,14 @@ function createWebServer() {
   app.get("/health", (_req, res) => {
     res.status(200).json({
       botReady: Boolean(global.client?.isReady()),
+      chelheadConfigured: chelheadApi.isConfigured(),
       ok: true,
       service: "RANKD bot",
     });
+  });
+
+  app.get("/api/chelhead/status", async (_req, res) => {
+    res.json(await chelheadApi.checkConnection());
   });
 
   app.get("/auth/discord", webAuth.beginDiscordLogin);

@@ -32,6 +32,7 @@ async function checkWebServer() {
     const paths = [
       "/health",
       "/api/auth/me",
+      "/api/chelhead/status",
       "/api/overview",
       "/api/leaderboard?limit=5&position=all&sort=elo",
       "/api/clubs",
