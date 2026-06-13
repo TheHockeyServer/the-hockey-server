@@ -126,6 +126,18 @@ async function initDatabase() {
         signature_verified BOOLEAN NOT NULL DEFAULT false,
         received_at BIGINT NOT NULL
       );
+
+      ALTER TABLE chelhead_webhook_events
+        ADD COLUMN IF NOT EXISTS processing_status TEXT;
+
+      ALTER TABLE chelhead_webhook_events
+        ADD COLUMN IF NOT EXISTS processing_error TEXT;
+
+      ALTER TABLE chelhead_webhook_events
+        ADD COLUMN IF NOT EXISTS rankd_match_id TEXT;
+
+      ALTER TABLE chelhead_webhook_events
+        ADD COLUMN IF NOT EXISTS processed_at BIGINT;
     `);
 
     initialized = true;

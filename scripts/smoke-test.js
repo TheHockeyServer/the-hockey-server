@@ -1,6 +1,12 @@
 const fs = require("fs");
+const assert = require("assert");
 
 const { createWebServer } = require("../services/webServer");
+const {
+  findMatchingRankdMatches,
+  parseCompletedResult,
+} = require("../services/chelheadResultProcessor");
+const matchService = require("../services/matchService");
 
 async function checkModules() {
   for (const dir of ["commands", "services"]) {
@@ -51,8 +57,84 @@ async function checkWebServer() {
   }
 }
 
+function buildTestPlayers() {
+  const positions = ["c", "lw", "rw", "ld", "rd", "g"];
+
+  return Object.fromEntries(positions.map(position => [
+    position,
+    [1, 2].map(number => ({
+      elo: 2500,
+      userId: `smoke-${position}-${number}`,
+      username: `Smoke ${position.toUpperCase()} ${number}`,
+    })),
+  ]));
+}
+
+function buildChelheadPayload(overrides = {}) {
+  return {
+    event: "match.completed",
+    timestamp: new Date().toISOString(),
+    webhook: {
+      id: "wh_smoke",
+      name: "RANKD smoke test",
+    },
+    match: {
+      matchId: "chelhead-smoke-match",
+      matchType: "reg",
+      timestamp: Math.floor(Date.now() / 1000) + 1,
+      clubs: {
+        "12345": { name: "Team A Club", gfraw: "5", garaw: "3" },
+        "67890": { name: "Team B Club", gfraw: "3", garaw: "5" },
+      },
+      _enhanced: {
+        result: {
+          "12345": { score: 5, result: "W", name: "Team A Club" },
+          "67890": { score: 3, result: "L", name: "Team B Club" },
+        },
+      },
+      ...overrides,
+    },
+  };
+}
+
+function checkChelheadResultMatching() {
+  const match = matchService.createMatch(buildTestPlayers());
+
+  matchService.setMatchClubSetup(match.id, {
+    finalized: true,
+    teamAClubId: "12345",
+    teamAClubName: "Team A Club",
+    teamBClubId: "67890",
+    teamBClubName: "Team B Club",
+  });
+
+  const validPayload = buildChelheadPayload();
+  const parsed = parseCompletedResult(validPayload);
+
+  assert.equal(parsed.valid, true);
+  assert.equal(parsed.matchType, "reg");
+  assert.deepEqual(findMatchingRankdMatches(validPayload).map(candidate => candidate.id), [match.id]);
+
+  const wrongClubPayload = buildChelheadPayload({
+    clubs: {
+      "12345": { name: "Team A Club", gfraw: "5" },
+      "99999": { name: "Wrong Club", gfraw: "3" },
+    },
+  });
+  assert.equal(findMatchingRankdMatches(wrongClubPayload).length, 0);
+
+  const nonRegulationPayload = buildChelheadPayload({ matchType: "club_private" });
+  assert.deepEqual(parseCompletedResult(nonRegulationPayload), {
+    valid: false,
+    reason: "not_regulation_match",
+  });
+
+  matchService.closeMatch(match.id);
+}
+
 async function main() {
   await checkModules();
+  checkChelheadResultMatching();
   await checkWebServer();
   console.log("Smoke tests passed");
 }

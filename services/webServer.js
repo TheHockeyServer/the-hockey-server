@@ -4,6 +4,7 @@ const path = require("path");
 
 const chelheadWebhookStore = require("./chelheadWebhookStore");
 const chelheadApi = require("./chelheadApi");
+const { processCompletedMatch } = require("./chelheadResultProcessor");
 const clubStore = require("./clubStore");
 const playerRegistrationStore = require("./playerRegistrationStore");
 const { registerCoreClub, registerCorePlayer } = require("./registrationService");
@@ -264,9 +265,29 @@ function createWebServer() {
         console.log(`CHELHead webhook stored for match ${result.matchId ?? "unknown"}`);
       }
 
+      let processingResult = { status: "duplicate" };
+
+      if (!result.duplicate) {
+        try {
+          processingResult = await processCompletedMatch(payload, {
+            signatureVerified: signatureResult.verified,
+          });
+        } catch (error) {
+          console.error(`Failed to apply CHELHead result ${result.matchId ?? "unknown"}:`, error);
+          processingResult = {
+            status: "processing_error",
+            error: error.message,
+          };
+        }
+
+        await chelheadWebhookStore.markProcessingResult(result.matchId, processingResult);
+        console.log(`CHELHead result ${result.matchId ?? "unknown"} processing status: ${processingResult.status}`);
+      }
+
       return res.status(200).json({
         ok: true,
         duplicate: result.duplicate,
+        processingStatus: processingResult.status,
       });
     } catch (error) {
       console.error("Failed to process CHELHead webhook:", error);

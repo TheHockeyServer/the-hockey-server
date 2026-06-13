@@ -96,6 +96,43 @@ async function recordWebhookEvent({ payload, headers, signatureVerified }) {
   };
 }
 
+async function markProcessingResult(chelheadMatchId, processingResult) {
+  if (!chelheadMatchId) return false;
+
+  if (!database.isDatabaseEnabled()) {
+    const store = readStore();
+    const record = store.events.find(item => item.chelheadMatchId === chelheadMatchId);
+
+    if (!record) return false;
+
+    record.processingResult = processingResult;
+    record.processedAt = Date.now();
+    writeStore(store);
+    return true;
+  }
+
+  const result = await database.query(
+    `
+      UPDATE chelhead_webhook_events
+      SET processing_status = $2,
+          processing_error = $3,
+          rankd_match_id = $4,
+          processed_at = $5
+      WHERE chelhead_match_id = $1
+    `,
+    [
+      chelheadMatchId,
+      processingResult.status,
+      processingResult.reason ?? processingResult.error ?? null,
+      processingResult.rankdMatchId ? String(processingResult.rankdMatchId) : null,
+      Date.now(),
+    ]
+  );
+
+  return result.rowCount > 0;
+}
+
 module.exports = {
+  markProcessingResult,
   recordWebhookEvent,
 };

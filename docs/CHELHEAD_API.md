@@ -39,11 +39,32 @@ A successful response looks like:
 }
 ```
 
-The existing webhook receiver is:
+The webhook receiver is:
 
 ```text
 https://the-hockey-server-production.up.railway.app/webhooks/chelhead
 ```
 
-Webhook subscription creation and automatic match-result processing will be added after confirming
-CHELHead's `POST /webhooks` request and response contract.
+Add the same secret used when creating the CHELHead webhook to the RANKD bot service:
+
+```text
+CHELHEAD_WEBHOOK_SECRET=<a long random secret>
+```
+
+Completed match payloads are stored and deduplicated by CHELHead match ID. RANKD only applies a
+result automatically when all of these checks pass:
+
+- The webhook signature is valid.
+- The event is `match.completed`.
+- The match type is `reg`.
+- The payload contains exactly two clubs.
+- Those clubs exactly match both clubs finalized for one active RANKD match.
+- The CHELHead game timestamp is not older than the RANKD match.
+- The payload contains a winner and valid final scores.
+
+Unsigned payloads are stored for investigation but do not update ELO. Setting
+`CHELHEAD_ALLOW_UNSIGNED_WEBHOOKS=true` bypasses that protection and should only be used briefly
+for controlled testing.
+
+Webhook subscription creation will be added after confirming CHELHead's exact `POST /webhooks`
+request, response, and deletion contracts.
