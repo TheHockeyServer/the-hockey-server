@@ -38,6 +38,8 @@ DISCORD_TOKEN=<Discord bot token>
 GUILD_ID=<RANKD Discord server ID>
 ```
 
+Legacy Railway setups using `GUID_ID` are also supported, but `GUILD_ID` is the preferred spelling.
+
 ## Registration Behavior
 
 - Public profiles and leaderboards remain viewable without login.

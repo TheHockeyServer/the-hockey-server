@@ -21,14 +21,24 @@ async function waitForDiscordClient() {
 }
 
 async function getGuild() {
-  const guildId = process.env.GUILD_ID;
+  const guildId = process.env.GUILD_ID ?? process.env.GUID_ID;
   const client = await waitForDiscordClient();
 
-  if (!client || !guildId) {
+  if (!client) {
     throw new Error("The Discord bot is not ready to assign server roles.");
   }
 
-  return client.guilds.cache.get(guildId) ?? client.guilds.fetch(guildId);
+  if (!guildId) {
+    throw new Error("The RANKD Discord server ID is not configured.");
+  }
+
+  const guild = client.guilds.cache.get(guildId) ?? await client.guilds.fetch(guildId).catch(() => null);
+
+  if (!guild) {
+    throw new Error("The configured Discord server could not be found.");
+  }
+
+  return guild;
 }
 
 async function assignRegistrationRole(userId, roleName) {
