@@ -39,6 +39,14 @@ A successful response looks like:
 }
 ```
 
+Signed-in website users can search CHELHead clubs without exposing the API key:
+
+```text
+GET /api/chelhead/clubs/search?name=<club name>
+```
+
+The registration page uses this endpoint to fill the exact club name and ID selected by the player.
+
 The webhook receiver is:
 
 ```text

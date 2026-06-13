@@ -780,6 +780,51 @@ button:disabled {
   gap: 0.75rem;
 }
 
+.club-finder {
+  display: grid;
+  gap: 0.65rem;
+  padding: 0.75rem;
+  border: 1px solid rgba(246, 234, 58, 0.24);
+  background: rgba(246, 234, 58, 0.035);
+}
+
+.club-search-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.45rem;
+}
+
+.club-search-results {
+  display: grid;
+  gap: 0.4rem;
+  max-height: 16rem;
+  overflow-y: auto;
+}
+
+.club-search-result {
+  display: grid;
+  gap: 0.25rem;
+  min-height: auto;
+  padding: 0.7rem;
+  background: rgba(255, 255, 255, 0.055);
+  text-align: left;
+}
+
+.club-search-result strong {
+  color: var(--text);
+}
+
+.club-search-result span {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.club-search-result.selected {
+  border-color: var(--yellow);
+  background: rgba(246, 234, 58, 0.12);
+}
+
 .team-rankd-grid {
   display: grid;
   grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
@@ -1177,6 +1222,10 @@ button:disabled {
 
   .team-rankd-grid,
   .team-application {
+    grid-template-columns: 1fr;
+  }
+
+  .club-search-row {
     grid-template-columns: 1fr;
   }
 

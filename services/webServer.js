@@ -90,6 +90,21 @@ function createWebServer() {
     res.json(await chelheadApi.checkConnection());
   });
 
+  app.get("/api/chelhead/clubs/search", webAuth.requireSession, async (req, res) => {
+    const query = String(req.query.name ?? "").trim();
+
+    if (query.length < 3 || query.length > 80) {
+      return res.status(400).json({ error: "Enter at least 3 characters of the club name." });
+    }
+
+    try {
+      return res.json(await chelheadApi.searchClubOptions(query));
+    } catch (error) {
+      console.error("CHELHead club search failed:", error);
+      return res.status(502).json({ error: "CHELHead club search is temporarily unavailable." });
+    }
+  });
+
   app.get("/auth/discord", webAuth.beginDiscordLogin);
   app.get("/auth/discord/callback", async (req, res) => {
     try {

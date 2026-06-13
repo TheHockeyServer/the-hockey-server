@@ -456,15 +456,27 @@ async function renderRegister() {
         <article class="registration-card">
           <span>Option Two</span>
           <h3>Register A Club</h3>
-          <p>Choose this if your club may be used for Core ELO games. Existing club IDs can be shared by multiple loyal club members.</p>
+          <p>Search CHELHead to find your club and automatically fill its exact name and ID.</p>
+          <div class="club-finder">
+            <label>
+              <span>Find Your Club</span>
+              <div class="club-search-row">
+                <input id="clubSearchInput" minlength="3" placeholder="Enter at least 3 characters">
+                <button type="button" id="clubSearchButton">Search</button>
+              </div>
+            </label>
+            <div id="clubSearchResults" class="club-search-results">
+              <p class="muted-line">Search results will appear here.</p>
+            </div>
+          </div>
           <form id="clubRegistrationForm">
             <label>
               <span>Club Name</span>
-              <input name="clubName" minlength="2" required placeholder="Enter EASHL club name">
+              <input name="clubName" id="clubNameInput" minlength="2" required placeholder="Choose a search result or enter club name">
             </label>
             <label>
               <span>Club ID</span>
-              <input name="clubId" minlength="2" required placeholder="Enter numbers only">
+              <input name="clubId" id="clubIdInput" minlength="2" required placeholder="Choose a search result or enter club ID">
             </label>
             <label>
               <span>Alias <small>Optional</small></span>
@@ -906,6 +918,58 @@ document.addEventListener("submit", async event => {
 });
 
 document.addEventListener("click", async event => {
+  const clubResult = event.target.closest("[data-club-result]");
+
+  if (clubResult) {
+    document.querySelector("#clubNameInput").value = clubResult.dataset.clubName;
+    document.querySelector("#clubIdInput").value = clubResult.dataset.clubId;
+    document.querySelectorAll("[data-club-result]").forEach(result => {
+      result.classList.toggle("selected", result === clubResult);
+    });
+    return;
+  }
+
+  const clubSearchButton = event.target.closest("#clubSearchButton");
+
+  if (clubSearchButton) {
+    const input = document.querySelector("#clubSearchInput");
+    const results = document.querySelector("#clubSearchResults");
+    const query = input.value.trim();
+
+    if (query.length < 3) {
+      results.innerHTML = `<p class="muted-line">Enter at least 3 characters.</p>`;
+      return;
+    }
+
+    clubSearchButton.disabled = true;
+    clubSearchButton.textContent = "Searching...";
+    results.innerHTML = `<p class="muted-line">Searching CHELHead...</p>`;
+
+    try {
+      const clubs = await fetchJson(`/api/chelhead/clubs/search?name=${encodeURIComponent(query)}`);
+      results.innerHTML = clubs.length
+        ? clubs.map(club => `
+          <button
+            class="club-search-result"
+            type="button"
+            data-club-result
+            data-club-id="${escapeHtml(club.clubId)}"
+            data-club-name="${escapeHtml(club.name)}"
+          >
+            <strong>${escapeHtml(club.name)}</strong>
+            <span>Club ID ${escapeHtml(club.clubId)}${club.platform ? ` | ${escapeHtml(club.platform)}` : ""}</span>
+          </button>
+        `).join("")
+        : `<p class="muted-line">No clubs matched that search.</p>`;
+    } catch (error) {
+      results.innerHTML = `<p class="muted-line">${escapeHtml(error.message)}</p>`;
+    } finally {
+      clubSearchButton.disabled = false;
+      clubSearchButton.textContent = "Search";
+    }
+    return;
+  }
+
   const approveButton = event.target.closest("[data-team-approve]");
   const denyButton = event.target.closest("[data-team-deny]");
 
@@ -968,6 +1032,13 @@ searchButton.addEventListener("click", () => {
 searchInput.addEventListener("keydown", event => {
   if (event.key === "Enter") {
     navigate("/leaderboard");
+  }
+});
+
+document.addEventListener("keydown", event => {
+  if (event.key === "Enter" && event.target.id === "clubSearchInput") {
+    event.preventDefault();
+    document.querySelector("#clubSearchButton")?.click();
   }
 });
 

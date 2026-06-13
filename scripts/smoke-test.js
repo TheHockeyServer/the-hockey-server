@@ -6,6 +6,7 @@ const {
   findMatchingRankdMatches,
   parseCompletedResult,
 } = require("../services/chelheadResultProcessor");
+const { normalizeClubSearchPayload } = require("../services/chelheadApi");
 const matchService = require("../services/matchService");
 
 async function checkModules() {
@@ -133,8 +134,27 @@ function checkChelheadResultMatching() {
   matchService.closeMatch(match.id);
 }
 
+function checkChelheadClubSearchNormalization() {
+  assert.deepEqual(normalizeClubSearchPayload({
+    clubs: [
+      { clubId: "5760", name: "FlyGuyz HC", platform: "common-gen5" },
+    ],
+  }), [
+    { clubId: "5760", name: "FlyGuyz HC", platform: "common-gen5" },
+  ]);
+
+  assert.deepEqual(normalizeClubSearchPayload({
+    clubs: {
+      "5760": { name: "FlyGuyz HC" },
+    },
+  }), [
+    { clubId: "5760", name: "FlyGuyz HC", platform: null },
+  ]);
+}
+
 async function main() {
   await checkModules();
+  checkChelheadClubSearchNormalization();
   checkChelheadResultMatching();
   await checkWebServer();
   console.log("Smoke tests passed");

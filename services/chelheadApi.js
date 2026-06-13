@@ -59,6 +59,51 @@ async function searchClubs(clubName) {
   });
 }
 
+function getClubCollection(payload) {
+  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload?.clubs)) return payload.clubs;
+  if (Array.isArray(payload?.results)) return payload.results;
+  if (Array.isArray(payload?.data)) return payload.data;
+  if (payload?.clubs && typeof payload.clubs === "object") {
+    return Object.entries(payload.clubs).map(([clubId, club]) => ({
+      clubId,
+      ...club,
+    }));
+  }
+  return [];
+}
+
+function normalizeClubSearchResult(club) {
+  const clubId = club?.clubId ?? club?.clubid ?? club?.id ?? club?.club_id;
+  const name = club?.name ?? club?.clubName ?? club?.clubname ?? club?.club_name;
+
+  if (!clubId || !name) return null;
+
+  return {
+    clubId: String(clubId),
+    name: String(name),
+    platform: club?.platform ? String(club.platform) : null,
+  };
+}
+
+function normalizeClubSearchPayload(payload) {
+  const unique = new Map();
+
+  for (const club of getClubCollection(payload)) {
+    const normalized = normalizeClubSearchResult(club);
+
+    if (normalized && !unique.has(normalized.clubId)) {
+      unique.set(normalized.clubId, normalized);
+    }
+  }
+
+  return Array.from(unique.values()).slice(0, 20);
+}
+
+async function searchClubOptions(clubName) {
+  return normalizeClubSearchPayload(await searchClubs(clubName));
+}
+
 async function checkConnection() {
   if (!isConfigured()) {
     return {
@@ -87,6 +132,8 @@ module.exports = {
   checkConnection,
   getConfig,
   isConfigured,
+  normalizeClubSearchPayload,
   request,
+  searchClubOptions,
   searchClubs,
 };
