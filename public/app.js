@@ -11,7 +11,7 @@ const leaderboardState = {
 };
 
 const routes = {
-  "/": renderLeaderboard,
+  "/": renderLanding,
   "/leaderboard": renderLeaderboard,
   "/clubs": renderClubs,
   "/matches": renderMatches,
@@ -94,7 +94,7 @@ function setActiveNav() {
 
   for (const link of navLinks) {
     const key = link.dataset.nav;
-    link.classList.toggle("active", path.includes(key) || (path === "/" && key === "leaderboard"));
+    link.classList.toggle("active", path === "/" ? key === "home" : path.includes(key));
   }
 }
 
@@ -227,6 +227,127 @@ async function loadAccountLink() {
   } catch {
     accountLink.textContent = "Register";
   }
+}
+
+function landingPathCard({
+  label,
+  title,
+  description,
+  points,
+  action,
+  href,
+  featured = false,
+}) {
+  return `
+    <article class="landing-path ${featured ? "featured" : ""}">
+      <span>${escapeHtml(label)}</span>
+      <h3>${escapeHtml(title)}</h3>
+      <p>${escapeHtml(description)}</p>
+      <ol>
+        ${points.map(point => `<li>${escapeHtml(point)}</li>`).join("")}
+      </ol>
+      <a class="${featured ? "primary-link" : "secondary-link"}" href="${href}">${escapeHtml(action)}</a>
+    </article>
+  `;
+}
+
+async function renderLanding() {
+  setActiveNav();
+
+  let auth = { authenticated: false };
+  try {
+    auth = await fetchJson("/api/auth/me");
+  } catch {
+    // The public landing page remains usable if account status is temporarily unavailable.
+  }
+
+  const registrationAction = auth.authenticated ? "Open Registration" : "Start With Discord";
+
+  view.innerHTML = `
+    <section class="landing-intro">
+      <div>
+        <p class="eyebrow">Welcome To RANKD</p>
+        <h2>Choose How You Compete</h2>
+        <p>RANKD offers two competitive paths for EA NHL 26 EASHL 6v6. Core ELO builds your individual rating through bot-balanced games. Team RANKD gives organized clubs a protected team identity and their own competitive ladder.</p>
+      </div>
+      <div class="landing-intro-actions">
+        <a class="primary-link" href="/register">${registrationAction}</a>
+        <a class="secondary-link" href="/leaderboard">View Leaderboard</a>
+      </div>
+    </section>
+
+    <section class="landing-section">
+      <div class="section-title">
+        <div>
+          <p class="eyebrow">Registration Paths</p>
+          <h2>Get Set Up</h2>
+          <p>Pick the option that matches how you plan to use RANKD.</p>
+        </div>
+      </div>
+      <div class="landing-paths">
+        ${landingPathCard({
+          label: "Core ELO",
+          title: "Standard ELO Player",
+          description: "For players who want to enter the individual queue without providing a personal club.",
+          points: [
+            "Sign in with Discord",
+            "Choose RANKD Player",
+            "Receive 2500 starting ELO and the RANKD Player role",
+          ],
+          action: registrationAction,
+          href: "/register",
+        })}
+        ${landingPathCard({
+          label: "Core ELO + Club",
+          title: "Standard ELO With A Club",
+          description: "For players willing to provide a club that may be used to locate completed Core ELO matches.",
+          points: [
+            "Sign in with Discord",
+            "Search CHELHead and select your club",
+            "Attach the club and receive the RANKD Verified role",
+          ],
+          action: "Find And Attach Club",
+          href: "/register",
+          featured: true,
+        })}
+        ${landingPathCard({
+          label: "Organized Competition",
+          title: "Team RANKD",
+          description: "For established clubs competing together on a protected team ladder separate from Core ELO.",
+          points: [
+            "Attach the club through Standard ELO first",
+            "Submit a Team RANKD ownership application",
+            "After staff approval, build the team roster and compete",
+          ],
+          action: "Open Team RANKD",
+          href: "/team-rankd",
+        })}
+      </div>
+    </section>
+
+    <section class="landing-explainer">
+      <article>
+        <span>Individual Competition</span>
+        <h3>How Core ELO Works</h3>
+        <p>Players join by position. When two Centers, Left Wings, Right Wings, Left Defensemen, Right Defensemen, and Goalies are ready, RANKD creates balanced teams using player ELO. There are no player captains choosing stacked teams.</p>
+        <a href="/leaderboard">Explore Core ELO standings</a>
+      </article>
+      <article>
+        <span>Club Competition</span>
+        <h3>How Team RANKD Works</h3>
+        <p>Team RANKD is the organized club path. Approved club ownership protects the team identity, supports controlled rosters, and keeps Team ELO completely separate from each player’s individual Core ELO rating.</p>
+        <a href="/team-rankd">Review Team RANKD setup</a>
+      </article>
+    </section>
+
+    <section class="landing-final">
+      <div>
+        <span>Ready To Climb?</span>
+        <h2>One Discord Login Starts Everything.</h2>
+      </div>
+      <a class="primary-link" href="/register">${registrationAction}</a>
+    </section>
+  `;
 }
 
 async function renderLeaderboard() {
@@ -835,6 +956,7 @@ function navigate(path) {
 
 function route() {
   const path = window.location.pathname;
+  document.body.dataset.page = path === "/" ? "landing" : path.slice(1).split("/")[0] || "landing";
   const playerMatch = path.match(/^\/players\/([^/]+)$/);
 
   if (playerMatch) {

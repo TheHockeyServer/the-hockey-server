@@ -192,6 +192,128 @@ h1 {
   padding: 1.25rem 0;
 }
 
+body[data-page="landing"] .toolbar {
+  display: none;
+}
+
+.landing-intro,
+.landing-final {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 1.25rem;
+  align-items: center;
+  padding: clamp(1.1rem, 4vw, 2rem);
+  border: 1px solid rgba(155, 53, 255, 0.45);
+  background:
+    radial-gradient(circle at 88% 18%, rgba(246, 234, 58, 0.2), transparent 15rem),
+    linear-gradient(135deg, rgba(155, 53, 255, 0.22), rgba(255, 255, 255, 0.035));
+}
+
+.landing-intro h2,
+.landing-final h2 {
+  margin: 0;
+  max-width: 46rem;
+  font-size: clamp(2rem, 7vw, 4.25rem);
+  line-height: 0.95;
+  text-transform: uppercase;
+}
+
+.landing-intro p:not(.eyebrow) {
+  max-width: 48rem;
+  margin: 0.8rem 0 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.landing-intro-actions {
+  display: grid;
+  gap: 0.55rem;
+  min-width: 12rem;
+}
+
+.landing-section {
+  padding: clamp(2rem, 6vw, 4rem) 0;
+}
+
+.landing-paths {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.landing-path {
+  display: grid;
+  align-content: start;
+  gap: 0.8rem;
+  min-height: 29rem;
+  padding: clamp(1rem, 3vw, 1.4rem);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background:
+    radial-gradient(circle at 100% 0%, rgba(155, 53, 255, 0.18), transparent 15rem),
+    rgba(8, 8, 11, 0.68);
+}
+
+.landing-path.featured {
+  border-color: rgba(246, 234, 58, 0.48);
+  background:
+    radial-gradient(circle at 100% 0%, rgba(246, 234, 58, 0.15), transparent 15rem),
+    rgba(8, 8, 11, 0.76);
+}
+
+.landing-path > span,
+.landing-explainer article > span,
+.landing-final span {
+  color: var(--yellow);
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.landing-path h3,
+.landing-explainer h3 {
+  margin: 0;
+  font-size: clamp(1.45rem, 4vw, 2.1rem);
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.landing-path p,
+.landing-path li,
+.landing-explainer p {
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.landing-path ol {
+  display: grid;
+  gap: 0.65rem;
+  margin: 0 0 auto;
+  padding-left: 1.25rem;
+}
+
+.landing-explainer {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  border-block: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.landing-explainer article {
+  padding: clamp(1.25rem, 4vw, 2rem);
+}
+
+.landing-explainer article + article {
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.landing-explainer a {
+  color: var(--yellow);
+  font-weight: 900;
+}
+
+.landing-final {
+  margin-top: clamp(2rem, 6vw, 4rem);
+}
+
 .search-label {
   color: var(--muted);
   font-size: 0.82rem;
@@ -1216,8 +1338,15 @@ button:disabled {
   .registration-grid,
   .registration-steps,
   .insight-grid,
-  .feature-grid {
+  .feature-grid,
+  .landing-paths,
+  .landing-explainer {
     grid-template-columns: 1fr;
+  }
+
+  .landing-explainer article + article {
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    border-left: 0;
   }
 
   .team-rankd-grid,
@@ -1256,8 +1385,14 @@ button:disabled {
   .player-hero-panel,
   .registration-hero,
   .club-row,
-  .setup-next-step {
+  .setup-next-step,
+  .landing-intro,
+  .landing-final {
     grid-template-columns: 1fr;
+  }
+
+  .landing-intro-actions {
+    min-width: 0;
   }
 
   .registration-actions {
