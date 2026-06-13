@@ -89,6 +89,15 @@ function getPlayerInitials(username) {
     .toUpperCase() || "R";
 }
 
+function playerAvatar(player, className = "") {
+  const initials = escapeHtml(getPlayerInitials(player?.username));
+  const image = player?.avatarUrl
+    ? `<img src="${escapeHtml(player.avatarUrl)}" alt="" loading="lazy">`
+    : "";
+
+  return `<span class="player-avatar ${className}"><span>${initials}</span>${image}</span>`;
+}
+
 function setActiveNav() {
   const path = window.location.pathname;
 
@@ -148,6 +157,7 @@ function playerRow(player) {
   return `
     <a class="player-row" href="/players/${encodeURIComponent(player.userId)}">
       <span class="rank">#${player.rank}</span>
+      ${playerAvatar(player)}
       <span class="identity">
         <strong>${escapeHtml(player.username)}</strong>
         <span>${escapeHtml(player.preferredPositionLabel)} | ${escapeHtml(recordText(player))} | ${player.gamesPlayed} games</span>
@@ -172,6 +182,7 @@ function podiumCard(player, index) {
   return `
     <a class="podium-card podium-${index + 1}" href="/players/${encodeURIComponent(player.userId)}">
       <span>${labels[index]}</span>
+      ${playerAvatar(player, "podium-avatar")}
       <strong>${escapeHtml(player.username)}</strong>
       <em>${player.rating} ELO</em>
       <small>${escapeHtml(player.preferredPositionLabel)} | ${escapeHtml(recordText(player))}</small>
@@ -400,7 +411,7 @@ async function renderPlayer(userId) {
 
     view.innerHTML = `
       <section class="player-hero-panel">
-        <div class="player-mark">${escapeHtml(getPlayerInitials(player.username))}</div>
+        ${playerAvatar(player, "profile-avatar")}
         <div class="player-hero-copy">
           <p class="eyebrow">RANKD Player Profile</p>
           <h2>${escapeHtml(player.username)}</h2>
@@ -840,6 +851,7 @@ function clubRow(club) {
           <div class="club-roster">
             ${players.map(player => `
               <a href="/players/${encodeURIComponent(player.userId)}">
+                ${playerAvatar(player, "roster-avatar")}
                 <strong>${escapeHtml(player.username)}</strong>
                 <span>${escapeHtml(player.preferredPositionLabel)} | ${escapeHtml(player.record)} | ${player.rating} ELO</span>
               </a>

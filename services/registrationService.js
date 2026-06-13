@@ -3,12 +3,13 @@ const { assignRegistrationRole, ROLE_NAMES } = require("./memberRoleService");
 const playerRegistrationStore = require("./playerRegistrationStore");
 const ratingStore = require("./ratingStore");
 
-async function registerCorePlayer({ userId, username }) {
+async function registerCorePlayer({ userId, username, avatarUrl }) {
   const registration = await playerRegistrationStore.registerPlayer({
     userId,
     username,
+    avatarUrl,
   });
-  const player = await ratingStore.getOrCreatePlayer(userId, username);
+  const player = await ratingStore.getOrCreatePlayer(userId, username, avatarUrl);
   const roles = await assignRegistrationRole(userId, ROLE_NAMES.player);
 
   return {
@@ -19,7 +20,7 @@ async function registerCorePlayer({ userId, username }) {
   };
 }
 
-async function registerCoreClub({ userId, username, clubId, clubName, alias }) {
+async function registerCoreClub({ userId, username, avatarUrl, clubId, clubName, alias }) {
   const result = await clubStore.registerClub({
     clubId,
     name: clubName,
@@ -31,7 +32,7 @@ async function registerCoreClub({ userId, username, clubId, clubName, alias }) {
     return result;
   }
 
-  const player = await ratingStore.getOrCreatePlayer(userId, username);
+  const player = await ratingStore.getOrCreatePlayer(userId, username, avatarUrl);
   const roles = await assignRegistrationRole(userId, ROLE_NAMES.verified);
 
   return {

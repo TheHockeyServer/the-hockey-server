@@ -134,10 +134,14 @@ async function initDatabase() {
       CREATE TABLE IF NOT EXISTS player_registrations (
         user_id TEXT PRIMARY KEY,
         username TEXT NOT NULL,
+        avatar_url TEXT,
         registration_type TEXT NOT NULL DEFAULT 'core_player',
         registered_at BIGINT NOT NULL,
         updated_at BIGINT NOT NULL
       );
+
+      ALTER TABLE player_registrations
+        ADD COLUMN IF NOT EXISTS avatar_url TEXT;
 
       CREATE TABLE IF NOT EXISTS team_elo_applications (
         id BIGSERIAL PRIMARY KEY,

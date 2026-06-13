@@ -73,10 +73,11 @@ function mapDbPlayer(row) {
   };
 }
 
-function createPlayer(userId, username) {
+function createPlayer(userId, username, avatarUrl = null) {
   return {
     userId,
     username: username ?? "Unknown",
+    avatarUrl,
     rating: DEFAULT_RATING,
     highestRating: DEFAULT_RATING,
     preferredPosition: null,
@@ -89,15 +90,19 @@ function createPlayer(userId, username) {
   };
 }
 
-async function getOrCreatePlayer(userId, username) {
+async function getOrCreatePlayer(userId, username, avatarUrl = null) {
   if (!database.isDatabaseEnabled()) {
     const data = loadState();
 
     if (!data.players[userId]) {
-      data.players[userId] = createPlayer(userId, username);
+      data.players[userId] = createPlayer(userId, username, avatarUrl);
       saveState();
-    } else if (username && data.players[userId].username !== username) {
-      data.players[userId].username = username;
+    } else if (
+      (username && data.players[userId].username !== username)
+      || (avatarUrl && data.players[userId].avatarUrl !== avatarUrl)
+    ) {
+      if (username) data.players[userId].username = username;
+      if (avatarUrl) data.players[userId].avatarUrl = avatarUrl;
       saveState();
     }
 
@@ -112,14 +117,15 @@ async function getOrCreatePlayer(userId, username) {
         wins, losses, games_played,
         goals_for, goals_against, last_played_at, data, updated_at
       )
-      VALUES ($1, $2, $3, $3, NULL, 0, 0, 0, 0, 0, NULL, '{}'::jsonb, $4)
+      VALUES ($1, $2, $3, $3, NULL, 0, 0, 0, 0, 0, NULL, $4::jsonb, $5)
       ON CONFLICT (user_id)
       DO UPDATE SET
         username = EXCLUDED.username,
+        data = players.data || EXCLUDED.data,
         updated_at = EXCLUDED.updated_at
       RETURNING *
     `,
-    [userId, username ?? "Unknown", DEFAULT_RATING, now]
+    [userId, username ?? "Unknown", DEFAULT_RATING, JSON.stringify(avatarUrl ? { avatarUrl } : {}), now]
   );
 
   return mapDbPlayer(result.rows[0]);
@@ -193,6 +199,7 @@ async function updatePlayers(players) {
         player.goalsAgainst,
         player.lastPlayedAt,
         JSON.stringify({
+          avatarUrl: player.avatarUrl,
           lastRatingChange: player.lastRatingChange,
           previousRating: player.previousRating,
         }),

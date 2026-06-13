@@ -1,4 +1,7 @@
 const crypto = require("crypto");
+const { getDiscordAvatarUrl } = require("./discordAvatar");
+const playerRegistrationStore = require("./playerRegistrationStore");
+const ratingStore = require("./ratingStore");
 
 const DISCORD_API_BASE = "https://discord.com/api/v10";
 const SESSION_COOKIE = "rankd_session";
@@ -162,6 +165,29 @@ async function completeDiscordLogin(req, res) {
 
   const token = await exchangeCode(req, req.query.code);
   const user = await fetchDiscordUser(token.access_token);
+  const avatarUrl = getDiscordAvatarUrl(user);
+
+  try {
+    const [player, registration] = await Promise.all([
+      ratingStore.getPlayer(user.id),
+      playerRegistrationStore.getRegisteredPlayer(user.id),
+    ]);
+
+    if (player) {
+      await ratingStore.getOrCreatePlayer(user.id, user.global_name || user.username, avatarUrl);
+    }
+
+    if (registration) {
+      await playerRegistrationStore.registerPlayer({
+        userId: user.id,
+        username: user.global_name || user.username,
+        avatarUrl,
+        registrationType: registration.registrationType,
+      });
+    }
+  } catch (error) {
+    console.error("Discord avatar refresh failed:", error);
+  }
 
   res.clearCookie(STATE_COOKIE);
   res.cookie(SESSION_COOKIE, encodeSignedPayload({
@@ -171,6 +197,7 @@ async function completeDiscordLogin(req, res) {
       username: user.global_name || user.username,
       discordUsername: user.username,
       avatar: user.avatar,
+      avatarUrl,
     },
   }), cookieOptions(SESSION_DURATION_MS));
 

@@ -70,6 +70,7 @@ function mapPlayer(row) {
   return {
     userId: row.user_id ?? row.userId,
     username: row.username ?? "Unknown",
+    avatarUrl: row.avatar_url ?? row.avatarUrl ?? row.data?.avatarUrl ?? null,
     rating,
     highestRating,
     preferredPosition,
@@ -207,6 +208,7 @@ async function getRegisteredClubs() {
         : {
             userId,
             username: `Discord ${userId}`,
+            avatarUrl: null,
             rating: 2500,
             highestRating: 2500,
             preferredPosition: null,
@@ -233,6 +235,7 @@ async function getRegisteredClubs() {
       registeredPlayers: rankPlayers(players).map(player => ({
         userId: player.userId,
         username: player.username,
+        avatarUrl: player.avatarUrl,
         rating: player.rating,
         record: `${player.wins}-${player.losses}`,
         preferredPositionLabel: player.preferredPositionLabel,

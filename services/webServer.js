@@ -156,6 +156,7 @@ function createWebServer() {
       const result = await registerCorePlayer({
         userId: req.rankdUser.id,
         username: req.rankdUser.username,
+        avatarUrl: req.rankdUser.avatarUrl,
       });
 
       return res.json({
@@ -177,6 +178,7 @@ function createWebServer() {
       const result = await registerCoreClub({
         userId: req.rankdUser.id,
         username: req.rankdUser.username,
+        avatarUrl: req.rankdUser.avatarUrl,
         clubId: req.body.clubId,
         clubName: req.body.clubName,
         alias: req.body.alias,

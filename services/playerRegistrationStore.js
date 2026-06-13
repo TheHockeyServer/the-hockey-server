@@ -33,13 +33,14 @@ function mapDbRegistration(row) {
   return {
     userId: row.user_id,
     username: row.username,
+    avatarUrl: row.avatar_url ?? null,
     registrationType: row.registration_type,
     registeredAt: Number(row.registered_at),
     updatedAt: Number(row.updated_at),
   };
 }
 
-async function registerPlayer({ userId, username, registrationType = "core_player" }) {
+async function registerPlayer({ userId, username, avatarUrl = null, registrationType = "core_player" }) {
   const now = Date.now();
 
   if (!database.isDatabaseEnabled()) {
@@ -49,6 +50,7 @@ async function registerPlayer({ userId, username, registrationType = "core_playe
     store.players[userId] = {
       userId,
       username,
+      avatarUrl: avatarUrl ?? existing?.avatarUrl ?? null,
       registrationType,
       registeredAt: existing?.registeredAt ?? now,
       updatedAt: now,
@@ -65,16 +67,17 @@ async function registerPlayer({ userId, username, registrationType = "core_playe
   const existing = await getRegisteredPlayer(userId);
   const result = await database.query(
     `
-      INSERT INTO player_registrations (user_id, username, registration_type, registered_at, updated_at)
-      VALUES ($1, $2, $3, $4, $4)
+      INSERT INTO player_registrations (user_id, username, avatar_url, registration_type, registered_at, updated_at)
+      VALUES ($1, $2, $3, $4, $5, $5)
       ON CONFLICT (user_id)
       DO UPDATE SET
         username = EXCLUDED.username,
+        avatar_url = COALESCE(EXCLUDED.avatar_url, player_registrations.avatar_url),
         registration_type = EXCLUDED.registration_type,
         updated_at = EXCLUDED.updated_at
       RETURNING *
     `,
-    [userId, username, registrationType, now]
+    [userId, username, avatarUrl, registrationType, now]
   );
 
   return {

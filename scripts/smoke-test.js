@@ -10,6 +10,7 @@ const {
   normalizeClubSearchPayload,
   normalizeClubSearchTerm,
 } = require("../services/chelheadApi");
+const { getDiscordAvatarUrl } = require("../services/discordAvatar");
 const matchService = require("../services/matchService");
 
 async function checkModules() {
@@ -181,8 +182,24 @@ function checkChelheadClubSearchNormalization() {
   ]);
 }
 
+function checkDiscordAvatarUrls() {
+  assert.equal(
+    getDiscordAvatarUrl({ id: "123", avatar: "avatar_hash" }),
+    "https://cdn.discordapp.com/avatars/123/avatar_hash.png?size=256"
+  );
+  assert.equal(
+    getDiscordAvatarUrl({ id: "123", avatar: "a_animated_hash" }),
+    "https://cdn.discordapp.com/avatars/123/a_animated_hash.gif?size=256"
+  );
+  assert.match(
+    getDiscordAvatarUrl({ id: "123", avatar: null, discriminator: "0" }),
+    /^https:\/\/cdn\.discordapp\.com\/embed\/avatars\/\d\.png$/
+  );
+}
+
 async function main() {
   await checkModules();
+  checkDiscordAvatarUrls();
   checkChelheadClubSearchNormalization();
   checkChelheadResultMatching();
   await checkWebServer();
