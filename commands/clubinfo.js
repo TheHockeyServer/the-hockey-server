@@ -1,6 +1,7 @@
 const { EmbedBuilder, SlashCommandBuilder } = require("discord.js");
 
 const clubStore = require("../services/clubStore");
+const teamEloStore = require("../services/teamEloStore");
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -38,6 +39,7 @@ module.exports = {
     }
 
     const club = matches[0];
+    const team = await teamEloStore.getTeamByClubId(club.clubId);
     const registeredUserIds = club.registeredUserIds ?? [club.registeredBy].filter(Boolean);
     const embed = new EmbedBuilder()
       .setTitle(club.name)
@@ -54,7 +56,8 @@ module.exports = {
         },
         { name: "Aliases", value: club.aliases.length > 0 ? club.aliases.join(", ") : "None", inline: false },
         { name: "Core ELO Use", value: "Available for match result lookup.", inline: true },
-        { name: "Team ELO Protected", value: club.isProtected ? "Yes" : "No", inline: true }
+        { name: "Team ELO Protected", value: team ? "Yes" : "No", inline: true },
+        { name: "Team RANKD Owner", value: team ? `<@${team.ownerUserId}>` : "None", inline: true }
       );
 
     await interaction.reply({ embeds: [embed], ephemeral: true });

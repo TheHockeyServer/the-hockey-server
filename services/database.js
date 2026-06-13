@@ -53,6 +53,29 @@ async function query(text, params = []) {
   return activePool.query(text, params);
 }
 
+async function transaction(callback) {
+  const activePool = getPool();
+
+  if (!activePool) {
+    throw new Error("Database URL is not configured.");
+  }
+
+  await initDatabase();
+  const client = await activePool.connect();
+
+  try {
+    await client.query("BEGIN");
+    const result = await callback((text, params = []) => client.query(text, params));
+    await client.query("COMMIT");
+    return result;
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
 async function initDatabase() {
   if (!useDatabase) return false;
   if (initialized) return true;
@@ -116,6 +139,42 @@ async function initDatabase() {
         updated_at BIGINT NOT NULL
       );
 
+      CREATE TABLE IF NOT EXISTS team_elo_applications (
+        id BIGSERIAL PRIMARY KEY,
+        club_id TEXT NOT NULL,
+        club_name TEXT NOT NULL,
+        owner_user_id TEXT NOT NULL,
+        owner_username TEXT NOT NULL,
+        status TEXT NOT NULL DEFAULT 'pending',
+        notes TEXT,
+        reviewed_by TEXT,
+        reviewed_at BIGINT,
+        created_at BIGINT NOT NULL,
+        updated_at BIGINT NOT NULL
+      );
+
+      CREATE UNIQUE INDEX IF NOT EXISTS team_elo_one_pending_application_per_club
+        ON team_elo_applications (LOWER(club_id))
+        WHERE status = 'pending';
+
+      CREATE TABLE IF NOT EXISTS team_elo_clubs (
+        club_id TEXT PRIMARY KEY,
+        club_name TEXT NOT NULL,
+        owner_user_id TEXT NOT NULL,
+        captain_user_ids JSONB NOT NULL DEFAULT '[]'::jsonb,
+        roster_user_ids JSONB NOT NULL DEFAULT '[]'::jsonb,
+        rating INTEGER NOT NULL DEFAULT 2500,
+        highest_rating INTEGER NOT NULL DEFAULT 2500,
+        wins INTEGER NOT NULL DEFAULT 0,
+        losses INTEGER NOT NULL DEFAULT 0,
+        games_played INTEGER NOT NULL DEFAULT 0,
+        goals_for INTEGER NOT NULL DEFAULT 0,
+        goals_against INTEGER NOT NULL DEFAULT 0,
+        approved_by TEXT NOT NULL,
+        approved_at BIGINT NOT NULL,
+        updated_at BIGINT NOT NULL
+      );
+
       CREATE TABLE IF NOT EXISTS chelhead_webhook_events (
         id BIGSERIAL PRIMARY KEY,
         event TEXT NOT NULL,
@@ -153,4 +212,5 @@ module.exports = {
   initDatabase,
   isDatabaseEnabled: () => useDatabase,
   query,
+  transaction,
 };

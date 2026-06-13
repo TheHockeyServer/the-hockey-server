@@ -1,5 +1,7 @@
 const ROLE_NAMES = {
   player: "RANKD Player",
+  captain: "Captain",
+  team: "RANKD Teams",
   verified: "RANKD Verified",
   unverified: "UNVERIFIED",
 };
@@ -77,7 +79,18 @@ async function assignRegistrationRole(userId, roleName) {
   };
 }
 
+async function assignRoles(userId, roleNames) {
+  const results = [];
+
+  for (const roleName of roleNames) {
+    results.push(await assignRegistrationRole(userId, roleName));
+  }
+
+  return results;
+}
+
 module.exports = {
   ROLE_NAMES,
   assignRegistrationRole,
+  assignRoles,
 };
