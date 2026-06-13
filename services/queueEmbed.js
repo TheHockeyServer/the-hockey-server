@@ -82,7 +82,7 @@ function buildQueueEmbed(queue, options = {}) {
     .setTitle(title)
     .setColor(0x7c3aed)
     .setImage(`attachment://${QUEUE_LOGO_FILE_NAME}`)
-    .setFooter({ text: "RANKD, Only Skill Will Help You Climb" });
+    .setFooter({ text: "RANKD, What's Your Rank?" });
 
   if (options.description) {
     embed.setDescription(options.description);

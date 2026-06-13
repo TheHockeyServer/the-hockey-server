@@ -175,7 +175,7 @@ try {
 
     $tagBrush = New-SolidBrush (New-Color 235 126 47 236)
     Draw-Capsule $graphics ([System.Drawing.RectangleF]::new(73, 275, 470, 42)) 18 $tagBrush $null
-    Draw-String $graphics "RANKD, ONLY SKILL WILL HELP YOU CLIMB" $smallFont $textBrush 92 286 432 24 "Center"
+    Draw-String $graphics "RANKD, WHAT'S YOUR RANK?" $smallFont $textBrush 92 286 432 24 "Center"
     $tagBrush.Dispose()
 
     $leftX = 70
@@ -236,7 +236,7 @@ try {
     $footerRect = [System.Drawing.RectangleF]::new(70, 1468, 1060, 74)
     $footerBrush = New-SolidBrush (New-Color 205 13 13 15)
     Draw-Capsule $graphics $footerRect 22 $footerBrush $panelPen
-    Draw-String $graphics "RANKD, ONLY SKILL WILL HELP YOU CLIMB" $footerFont $textBrush 95 1492 1010 32 "Center"
+    Draw-String $graphics "RANKD, WHAT'S YOUR RANK?" $footerFont $textBrush 95 1492 1010 32 "Center"
     $footerBrush.Dispose()
 
     $bitmap.Save($outputPath, [System.Drawing.Imaging.ImageFormat]::Png)
