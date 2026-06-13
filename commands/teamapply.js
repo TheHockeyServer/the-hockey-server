@@ -8,7 +8,7 @@ module.exports = {
     .setName("teamapply")
     .setDescription("Apply to reserve a club for Team RANKD")
     .addStringOption(option =>
-      option.setName("club_id").setDescription("The registered CHELHead/EA club ID").setRequired(true)
+      option.setName("club").setDescription("Registered club name, alias, or CHELHead/EA club ID").setRequired(true)
     )
     .addStringOption(option =>
       option.setName("notes").setDescription("Optional information for RANKD staff").setRequired(false)
@@ -17,13 +17,27 @@ module.exports = {
   async execute(interaction) {
     await interaction.deferReply({ ephemeral: true });
 
-    const clubId = interaction.options.getString("club_id", true);
-    const club = await clubStore.findClubById(clubId);
+    const clubQuery = interaction.options.getString("club", true);
+    const matches = await clubStore.findClubByNameOrAlias(clubQuery);
 
-    if (!club) {
-      await interaction.editReply("Register this club for Core ELO first with `/registerclub`, then submit the Team RANKD application.");
+    if (matches.length === 0) {
+      await interaction.editReply([
+        `I could not find a Core ELO club matching **${clubQuery}**.`,
+        "Use its exact registered club name or numeric club ID, or register it first with `/registerclub`.",
+      ].join("\n"));
       return;
     }
+
+    if (matches.length > 1) {
+      await interaction.editReply([
+        "I found multiple registered clubs. Run `/teamapply` again using the exact numeric club ID:",
+        "",
+        ...matches.slice(0, 10).map(club => `- ${club.name} (\`${club.clubId}\`)`),
+      ].join("\n"));
+      return;
+    }
+
+    const club = matches[0];
 
     if (!(club.registeredUserIds ?? []).includes(interaction.user.id)) {
       await interaction.editReply("You must first attach your Discord account to this club through Core ELO registration.");

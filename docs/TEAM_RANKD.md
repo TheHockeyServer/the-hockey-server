@@ -10,7 +10,7 @@ Team RANKD is separate from Core ELO.
 ## Initial Commands
 
 ```text
-/teamapply club_id:<registered club ID> notes:<optional>
+/teamapply club:<registered club name, alias, or ID> notes:<optional>
 /teampending
 /teamapprove application_id:<number>
 /teamdeny application_id:<number> reason:<text>
