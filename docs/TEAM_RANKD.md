@@ -28,7 +28,17 @@ Team RANKD is separate from Core ELO.
 
 Players can complete the same flow from `/team-rankd` on the RANKD website. New applications and
 staff decisions are also posted to the `#team-approvals` Discord channel. Signed-in Discord server
-administrators can review pending applications directly on the website.
+members with the `ADMIN` or `RES` role can review pending applications directly on the website.
+Members with Discord's Administrator permission also retain access as a failsafe.
+
+## Staff Access
+
+- `RANKD CEO`: Full owner-level staff access.
+- `ADMIN`: Full staff access and the foundation for future high-level administrative controls.
+- `RES`: Operational enforcement access, including the current Team RANKD approval queue.
+- Discord Administrator permission: Full staff access regardless of named role.
+- All approval API endpoints enforce these permissions server-side; hiding the website panel is not
+  the only protection.
 
 ## Next Team RANKD Systems
 

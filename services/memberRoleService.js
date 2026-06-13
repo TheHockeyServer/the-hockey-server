@@ -1,8 +1,11 @@
 const { PermissionFlagsBits } = require("discord.js");
 
 const ROLE_NAMES = {
+  admin: "ADMIN",
+  owner: "RANKD CEO",
   player: "RANKD Player",
   captain: "Captain",
+  enforcement: "RES",
   team: "RANKD Teams",
   verified: "RANKD Verified",
   unverified: "UNVERIFIED",
@@ -96,9 +99,29 @@ async function getGuildMember(userId) {
   return guild.members.fetch(userId).catch(() => null);
 }
 
+function hasNamedRole(member, roleName) {
+  return member?.roles.cache.some(role => role.name === roleName) ?? false;
+}
+
+async function isAdminMember(userId) {
+  const member = await getGuildMember(userId);
+
+  return Boolean(
+    member?.permissions.has(PermissionFlagsBits.Administrator) ||
+    hasNamedRole(member, ROLE_NAMES.admin) ||
+    hasNamedRole(member, ROLE_NAMES.owner)
+  );
+}
+
 async function isStaffMember(userId) {
   const member = await getGuildMember(userId);
-  return Boolean(member?.permissions.has(PermissionFlagsBits.Administrator));
+
+  return Boolean(
+    member?.permissions.has(PermissionFlagsBits.Administrator) ||
+    hasNamedRole(member, ROLE_NAMES.admin) ||
+    hasNamedRole(member, ROLE_NAMES.owner) ||
+    hasNamedRole(member, ROLE_NAMES.enforcement)
+  );
 }
 
 module.exports = {
@@ -107,5 +130,6 @@ module.exports = {
   assignRoles,
   getGuild,
   getGuildMember,
+  isAdminMember,
   isStaffMember,
 };
